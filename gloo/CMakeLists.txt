@@ -23,6 +23,7 @@ list(APPEND GLOO_HDRS
   "${CMAKE_CURRENT_SOURCE_DIR}/barrier_all_to_all.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/barrier_all_to_one.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/broadcast_one_to_all.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/reduce_scatter.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/context.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/math.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/pairwise_exchange.h"
@@ -43,12 +44,12 @@ endif()
 # The builder links to both the base gloo library and gloo_cuda if
 # USE_CUDA is set. It can therefore not be part of either.
 list(APPEND GLOO_BUILDER_SRCS
-  "${CMAKE_CURRENT_SOURCE_DIR}/allreduce_builder.cc",
-  "${CMAKE_CURRENT_SOURCE_DIR}/broadcast_builder.cc",
+  "${CMAKE_CURRENT_SOURCE_DIR}/allreduce_builder.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/broadcast_builder.cc"
   )
 
 list(APPEND GLOO_BUILDER_HDRS
-  "${CMAKE_CURRENT_SOURCE_DIR}/allreduce_builder.h",
+  "${CMAKE_CURRENT_SOURCE_DIR}/allreduce_builder.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/broadcast_builder.h"
   )
 
