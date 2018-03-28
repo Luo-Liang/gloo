@@ -26,6 +26,7 @@
 
 #include "gloo/benchmark/benchmark.h"
 #include "gloo/benchmark/runner.h"
+#include "third-party/json/single_include/nlohmann/json.hpp"
 
 using namespace gloo;
 using namespace gloo::benchmark;
@@ -94,6 +95,46 @@ class AllreduceBenchmark : public Benchmark<T> {
   }
 };
 
+
+template <typename T>
+class PLinkScheduleBenchmark : public Benchmark<T>
+{
+	using Benchmark<T>::Benchmark;
+	using json = nlohmann::json;
+	json schedule;
+public:
+	virtual void initialize(int elements) override {
+		auto ptrs = this->allocate(this->options_.inputs, elements);
+		auto filePath = options->plinkScheduleFile;
+		std::ifstream i("file.json");
+		i >> schedule;
+
+		//figure out my schedule.
+		std::vector<shared_ptr<Algorithm>> mySchedule;
+		int layer = 0;
+		for (json::iterator it = schedule.begin(); it != schedule.end(); ++schedule) {
+			json layerSchedule = *it;
+			for (json::iterator sched = layerSchedule.begin(); sched != schedule.end(); sched++)
+			{
+				//"participants"
+				//"Algorithm"
+				json obj = *sched;
+				std::vector<int> participants = obj["particpants"];
+				std::string algorithm = obj["algorithm"];
+				if (std::find(participants.begin(), participants.end(), this->options_.contextRank) != participants.end())
+				{
+					//i should queue this task for me.
+					var pCtx = std::make_shared<::gloo::Context>(this->options_.contextRank, participants.size());
+					//create an algorithm.
+					
+				}
+
+			}
+			layer++;
+		}
+	}
+};
+
 template <typename T>
 class BarrierAllToAllBenchmark : public Benchmark<T> {
   using Benchmark<T>::Benchmark;
@@ -139,6 +180,7 @@ class BroadcastOneToAllBenchmark : public Benchmark<T> {
  protected:
   const int rootRank_ = 0;
 };
+
 
 template <typename T>
 class PairwiseExchangeBenchmark : public Benchmark<T> {
@@ -243,6 +285,12 @@ class ReduceScatterBenchmark : public Benchmark<T> {
       return gloo::make_unique<ReduceScatterBenchmark<T>>(context, x);  \
     };                                                                     \
   }                                                                        \
+  else if(x.benchmark == "plink")                                         \
+  {                                                                     \
+    fn = [&](std::shared_ptr<Context>& context) {                        \
+		return gloo::make_unique<PLinkScheduleBenchmark<T>>(context, x);  \
+	}                                                                     \
+  }                                                                      \
   if (!fn) {                                                               \
     GLOO_ENFORCE(false, "Invalid algorithm: ", x.benchmark);               \
   }                                                                        \

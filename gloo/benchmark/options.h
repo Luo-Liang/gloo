@@ -33,7 +33,7 @@ struct options {
 
   // Rendezvous using file system
   std::string sharedPath;
-
+  std::string plinkScheduleFile;
   // Transport
   std::string transport;
   std::vector<std::string> tcpDevice;

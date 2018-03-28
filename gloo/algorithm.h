@@ -46,14 +46,12 @@ namespace gloo {
 			hierarchy = levels;
 		}
 
-		virtual void run()
+		virtual void run() override
 		{
 			for (int i = 0; i < hierarchy.size(); i++)
 			{
 				hierarchy.at(i)->run();
 			}
-
-
 		}
 	};
 
