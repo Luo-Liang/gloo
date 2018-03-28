@@ -10,107 +10,128 @@
 #pragma once
 
 #include <memory>
-
+#include <vector>
 #include "gloo/context.h"
 #include "gloo/math.h"
-
 namespace gloo {
 
-extern const size_t kOnDeviceThreshold;
+	extern const size_t kOnDeviceThreshold;
 
-class Algorithm {
- public:
-  explicit Algorithm(const std::shared_ptr<Context>&);
-  virtual ~Algorithm() = 0;
+	class Algorithm {
+	public:
+		explicit Algorithm(const std::shared_ptr<Context>&);
+		virtual ~Algorithm() = 0;
 
-  virtual void run() = 0;
+		virtual void run() = 0;
+		std::shared_ptr<Context> GetContext() { return context_; }
+	protected:
+		std::shared_ptr<Context> context_;
 
- protected:
-  std::shared_ptr<Context> context_;
+		const int contextRank_;
+		const int contextSize_;
 
-  const int contextRank_;
-  const int contextSize_;
+		std::unique_ptr<transport::Pair>& getPair(int i);
 
-  std::unique_ptr<transport::Pair>& getPair(int i);
+		// Helpers for ring algorithms
+		std::unique_ptr<transport::Pair>& getLeftPair();
+		std::unique_ptr<transport::Pair>& getRightPair();
+	};
 
-  // Helpers for ring algorithms
-  std::unique_ptr<transport::Pair>& getLeftPair();
-  std::unique_ptr<transport::Pair>& getRightPair();
-};
+	class MultiphaseAlgorithm : public Algorithm
+	{
+		std::vector<std::shared_ptr<Algorithm>> hierarchy;
+	public:
+		MultiphaseAlgorithm(std::vector<std::shared_ptr<Algorithm>>& levels) : Algorithm(NULL)
+		{
+			hierarchy = levels;
+		}
 
-// Type of reduction function.
-//
-// If the reduction type is one of the built-ins, algorithm
-// implementations may use accelerated versions if available.
-//
-// For example, if a ReductionFunction with ReductionType equal
-// SUM is passed to CUDA aware Allreduce, it knows it can
-// use a NCCL implementation instead of the specified function.
-//
-enum ReductionType {
-  SUM = 1,
-  PRODUCT = 2,
-  MAX = 3,
-  MIN = 4,
+		virtual void run()
+		{
+			for (int i = 0; i < hierarchy.size(); i++)
+			{
+				hierarchy.at(i)->run();
+			}
 
-  // Use larger number so we have plenty of room to add built-ins
-  CUSTOM = 1000,
-};
 
-template <typename T>
-class ReductionFunction {
- public:
-  using Function = void(T*, const T*, size_t n);
+		}
+	};
 
-  static const ReductionFunction<T>* sum;
-  static const ReductionFunction<T>* product;
-  static const ReductionFunction<T>* min;
-  static const ReductionFunction<T>* max;
+	// Type of reduction function.
+	//
+	// If the reduction type is one of the built-ins, algorithm
+	// implementations may use accelerated versions if available.
+	//
+	// For example, if a ReductionFunction with ReductionType equal
+	// SUM is passed to CUDA aware Allreduce, it knows it can
+	// use a NCCL implementation instead of the specified function.
+	//
+	enum ReductionType {
+		SUM = 1,
+		PRODUCT = 2,
+		MAX = 3,
+		MIN = 4,
 
-  ReductionFunction(ReductionType type, Function* fn)
-      : type_(type), fn_(fn) {}
+		// Use larger number so we have plenty of room to add built-ins
+		CUSTOM = 1000,
+	};
 
-  ReductionType type() const {
-    return type_;
-  }
+	template <typename T>
+	class ReductionFunction {
+	public:
+		using Function = void(T*, const T*, size_t n);
 
-  void call(T* x, const T* y, size_t n) const {
-    fn_(x, y, n);
-  }
+		static const ReductionFunction<T>* sum;
+		static const ReductionFunction<T>* product;
+		static const ReductionFunction<T>* min;
+		static const ReductionFunction<T>* max;
 
- protected:
-  ReductionType type_;
-  Function* fn_;
-};
+		ReductionFunction(ReductionType type, Function* fn)
+			: type_(type), fn_(fn) {}
 
-template <typename T>
-const ReductionFunction<T>* ReductionFunction<T>::sum =
-  new ReductionFunction<T>(SUM, &::gloo::sum<T>);
-template <typename T>
-const ReductionFunction<T>* ReductionFunction<T>::product =
-  new ReductionFunction<T>(PRODUCT, &::gloo::product<T>);
-template <typename T>
-const ReductionFunction<T>* ReductionFunction<T>::min =
-  new ReductionFunction<T>(MIN, &::gloo::min<T>);
-template <typename T>
-const ReductionFunction<T>* ReductionFunction<T>::max =
-  new ReductionFunction<T>(MAX, &::gloo::max<T>);
+		ReductionType type() const {
+			return type_;
+		}
 
-// Local operation.
-// If an algorithm uses multiple local pointers, local operations
-// can be used for local reduction, broadcast, gathering, etc.
-template <typename T>
-class LocalOp {
- public:
-  virtual ~LocalOp() {}
-  virtual void runAsync() = 0;
-  virtual void wait() = 0;
+		void call(T* x, const T* y, size_t n) const {
+			fn_(x, y, n);
+		}
 
-  // Synchronous run is equal to asynchronous run and wait.
-  inline void run() {
-    runAsync();
-    wait();
-  }
-};
+	protected:
+		ReductionType type_;
+		Function* fn_;
+	};
 
-} // namespace gloo
+	template <typename T>
+	const ReductionFunction<T>* ReductionFunction<T>::sum =
+		new ReductionFunction<T>(SUM, &::gloo::sum<T>);
+	template <typename T>
+	const ReductionFunction<T>* ReductionFunction<T>::product =
+		new ReductionFunction<T>(PRODUCT, &::gloo::product<T>);
+	template <typename T>
+	const ReductionFunction<T>* ReductionFunction<T>::min =
+		new ReductionFunction<T>(MIN, &::gloo::min<T>);
+	template <typename T>
+	const ReductionFunction<T>* ReductionFunction<T>::max =
+		new ReductionFunction<T>(MAX, &::gloo::max<T>);
+
+	// Local operation.
+	// If an algorithm uses multiple local pointers, local operations
+	// can be used for local reduction, broadcast, gathering, etc.
+	template <typename T>
+	class LocalOp {
+	public:
+		virtual ~LocalOp() {}
+		virtual void runAsync() = 0;
+		virtual void wait() = 0;
+
+		// Synchronous run is equal to asynchronous run and wait.
+		inline void run() {
+			runAsync();
+			wait();
+		}
+	};
+
+
+
+}// namespace gloo
