@@ -126,7 +126,40 @@ public:
 					//i should queue this task for me.
 					var pCtx = std::make_shared<::gloo::Context>(this->options_.contextRank, participants.size());
 					//create an algorithm.
-					
+					if (this->options.->benchmark == "allgather_ring") {
+							fn = [&](std::shared_ptr<Context>& context) {                          
+							return gloo::make_unique<AllgatherBenchmark<T>>(context, x);         
+						};                                                                     
+					}
+					else if (this->options.->benchmark == "allreduce_ring") {
+							fn = [&](std::shared_ptr<Context>& context) {                          
+							return gloo::make_unique<AllreduceBenchmark<AllreduceRing<T>, T>>(
+								context, x);                                                     
+						};                                                                     
+					}
+					else if (this->options.->benchmark == "allreduce_ring_chunked") {
+							fn = [&](std::shared_ptr<Context>& context) {                          
+							return gloo::make_unique<                                            
+							AllreduceBenchmark<AllreduceRingChunked<T>, T>>(context, x);     
+						};                                                                     
+					}
+					else if (this->options.->benchmark == "allreduce_halving_doubling") {
+							fn = [&](std::shared_ptr<Context>& context) {                          
+							return gloo::make_unique<                                            
+							AllreduceBenchmark<AllreduceHalvingDoubling<T>, T>>(context, x); 
+						};                                                                     
+					}
+					else if (this->options.->benchmark == "allreduce_bcube") {
+							fn = [&](std::shared_ptr<Context>& context) {                          
+							return gloo::make_unique<                                            
+							AllreduceBenchmark<AllreduceBcube<T>, T>>(context, x);           
+						};                                                                     
+					}
+					else if (this->options.->benchmark == "reduce_scatter") {
+							fn = [&](std::shared_ptr<Context>& context) {                          
+							return gloo::make_unique<ReduceScatterBenchmark<T>>(context, x);  
+						};                                                                     
+					}
 				}
 
 			}
