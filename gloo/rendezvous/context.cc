@@ -15,8 +15,8 @@
 namespace gloo {
 	namespace rendezvous {
 		//currently, prefix key is only used for Plink Redis rendezvous.
-		Context::Context(int rank, int size, int base, std::string prefixKey)
-			: ::gloo::Context(rank, size, base), prefix(prefixKey)
+		Context::Context(int rank, int size, int base)
+			: ::gloo::Context(rank, size, base)
 		{
 		}
 
@@ -52,7 +52,7 @@ namespace gloo {
 			}
 
 			std::ostringstream storeKey;
-			storeKey << prefix << "::" << rank;
+			storeKey  << rank;
 			store.set(storeKey.str(), allBytes);
 
 			// Connect every pair
@@ -64,7 +64,7 @@ namespace gloo {
 				// Wait for address of other side of this pair to become available
 				//my peers must have the same prefix with me!
 				std::ostringstream key;
-				key << prefix << "::" << i;
+				key << i;
 				store.wait({ key.str() }, getTimeout());
 
 				// Connect to other side of this pair

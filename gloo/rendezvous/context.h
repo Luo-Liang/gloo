@@ -24,7 +24,7 @@ class ContextFactory;
 
 class Context : public ::gloo::Context {
  public:
-  Context(int rank, int size, int base = 2, std::string prefixKey = "");
+  Context(int rank, int size, int base = 2);
   virtual ~Context();
 
   void connectFullMesh(
@@ -33,7 +33,6 @@ class Context : public ::gloo::Context {
 
  protected:
   std::vector<char> extractAddress(std::vector<char>& allAddrs, int i);
-  std::string prefix;
   friend class ContextFactory;
 };
 

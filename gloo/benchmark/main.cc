@@ -23,7 +23,8 @@
 #include "gloo/common/logging.h"
 #include "gloo/context.h"
 #include "gloo/types.h"
-
+#include "gloo/rendezvous/redis_store.h"
+#include "gloo/rendezvous/prefix_store.h"
 #include "gloo/benchmark/benchmark.h"
 #include "gloo/benchmark/runner.h"
 #include "third-party/json/single_include/nlohmann/json.hpp"
@@ -101,18 +102,18 @@ namespace {
 	{
 		using Benchmark<T>::Benchmark;
 		using json = nlohmann::json;
-		json schedule;
+		//json schedule;
 	public:
 		virtual void initialize(int elements) override {
 			auto ptrs = this->allocate(this->options_.inputs, elements);
-			auto filePath = options->plinkScheduleFile;
+			auto filePath = this->options_->plinkScheduleFile;
 			std::ifstream i("plink.json");
-			i >> schedule;
+			json schedule(i);
 
 			//figure out my schedule.
-			std::vector<shared_ptr<Algorithm>> mySchedule;
+			std::vector<std::shared_ptr<Algorithm>> mySchedule;
 			int layer = 0;
-			for (json::iterator it = schedule.begin(); it != schedule.end(); ++schedule)
+			for (json::iterator it = schedule.begin(); it != schedule.end(); it++)
 			{
 				json layerSchedule = *it;
 				for (json::iterator sched = layerSchedule.begin(); sched != schedule.end(); sched++)
@@ -132,7 +133,7 @@ namespace {
 
 						std::shared_ptr<Context> pCtx = std::make_shared<::gloo::Context>(rnk, participants.size(), 2, groupId);
 						//create an algorithm.
-						shared_ptr<Algorithm> algo;
+						std::shared_ptr<gloo::Algorithm> algo = NULL;
 						if (algorithm == "allgather_ring") {
 							algo = std::make_shared<AllgatherRing<T>>(pCtx);
 						}
@@ -148,19 +149,22 @@ namespace {
 						else if (algorithm == "allreduce_bcube") {
 							algo = std::make_shared<AllreduceBcube<T>>(pCtx);
 						};
+						//I can be only in one schedule in one layer.
+						//add to my context.
+						//need to initialize context, because the _backing context will not be sufficient for all schedules.
+  					gloo::rendezvous::RedisStore redisStore(options_.redisHost, options_.redisPort);
+  					gloo::rendezvous::PrefixStore prefixStore(groupId, redisStore);		
+						pCtx->connectFullMesh(prefixStore);
+						mySchedule.push_back(algo);
 					}
-					//I can be only in one schedule in one layer.
-					//add to my context.
-					//need to initialize context, because the _backing context will not be sufficient for all schedules.
-					pCtx->connectFullMesh();
-					mySchedule.push_back(algo);
+
 				}
 			}
 			this->algorithm_ = std::make_shared<MultiphaseAlgorithm>(mySchedule);
 			layer++;
 		}
-	}
-};
+	};
+
 
 template <typename T>
 class BarrierAllToAllBenchmark : public Benchmark<T> {
