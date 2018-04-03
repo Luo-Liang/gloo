@@ -33,245 +33,235 @@ using namespace gloo::benchmark;
 
 namespace {
 
-    template <typename T>
-    class AllgatherBenchmark : public Benchmark<T> {
-        using Benchmark<T>::Benchmark;
-    public:
-        virtual void initialize(int elements) override {
-            auto inPtrs = this->allocate(this->options_.inputs, elements);
-            GLOO_ENFORCE_EQ(inPtrs.size(), this->options_.inputs);
-            outputs_.resize(this->options_.inputs * this->context_->size * elements);
-            this->algorithm_.reset(new AllgatherRing<T>(
-                this->context_, this->getInputs(), outputs_.data(), elements));
-        }
+	template <typename T>
+	class AllgatherBenchmark : public Benchmark<T> {
+		using Benchmark<T>::Benchmark;
+	public:
+		virtual void initialize(int elements) override {
+			auto inPtrs = this->allocate(this->options_.inputs, elements);
+			GLOO_ENFORCE_EQ(inPtrs.size(), this->options_.inputs);
+			outputs_.resize(this->options_.inputs * this->context_->size * elements);
+			this->algorithm_.reset(new AllgatherRing<T>(
+				this->context_, this->getInputs(), outputs_.data(), elements));
+		}
 
-        virtual void verify() override {
-            const auto stride = this->context_->size * this->inputs_.size();
-            const auto elements = this->inputs_[0].size();
-            for (int rank = 0; rank < this->context_->size; rank++) {
-                auto val = rank * this->inputs_.size();
-                for (int elem = 0; elem < elements; elem++) {
-                    T exp(elem * stride + val);
-                    for (int input = 0; input < this->inputs_.size(); input++) {
-                        const auto rankOffset = rank * elements * this->inputs_.size();
-                        const auto inputOffset = input * elements;
-                        GLOO_ENFORCE_EQ(
-                            outputs_[rankOffset + inputOffset + elem], exp + T(input),
-                            "Mismatch at index: [", rank, ", ", input, ", ", elem, "]");
-                    }
-                }
-            }
-        }
+		virtual void verify() override {
+			const auto stride = this->context_->size * this->inputs_.size();
+			const auto elements = this->inputs_[0].size();
+			for (int rank = 0; rank < this->context_->size; rank++) {
+				auto val = rank * this->inputs_.size();
+				for (int elem = 0; elem < elements; elem++) {
+					T exp(elem * stride + val);
+					for (int input = 0; input < this->inputs_.size(); input++) {
+						const auto rankOffset = rank * elements * this->inputs_.size();
+						const auto inputOffset = input * elements;
+						GLOO_ENFORCE_EQ(
+							outputs_[rankOffset + inputOffset + elem], exp + T(input),
+							"Mismatch at index: [", rank, ", ", input, ", ", elem, "]");
+					}
+				}
+			}
+		}
 
-    protected:
-        std::vector<T> outputs_;
-    };
+	protected:
+		std::vector<T> outputs_;
+	};
 
-    template <class A, typename T>
-    class AllreduceBenchmark : public Benchmark<T> {
-        using Benchmark<T>::Benchmark;
-    public:
-        virtual void initialize(int elements) override {
-            auto ptrs = this->allocate(this->options_.inputs, elements);
-            this->algorithm_.reset(new A(this->context_, ptrs, elements));
-        }
+	template <class A, typename T>
+	class AllreduceBenchmark : public Benchmark<T> {
+		using Benchmark<T>::Benchmark;
+	public:
+		virtual void initialize(int elements) override {
+			auto ptrs = this->allocate(this->options_.inputs, elements);
+			this->algorithm_.reset(new A(this->context_, ptrs, elements));
+		}
 
-        virtual void verify() override {
-            // Size is the total number of pointers across the context
-            const auto size = this->context_->size * this->inputs_.size();
-            // Expected is set to the expected value at ptr[0]
-            const auto expected = (size * (size - 1)) / 2;
-            // The stride between values at subsequent indices is equal to
-            // "size", and we have "size" of them. Therefore, after
-            // allreduce, the stride between expected values is "size^2".
-            const auto stride = size * size;
-            for (const auto& input : this->inputs_) {
-                for (int i = 0; i < input.size(); i++) {
-                    auto offset = i * stride;
-                    GLOO_ENFORCE_EQ(
-                        T(offset + expected), input[i], "Mismatch at index: ", i);
-                }
-            }
-        }
-    };
-
-
-    template <typename T>
-    class PLinkScheduleBenchmark : public Benchmark<T>
-    {
-        using Benchmark<T>::Benchmark;
-        using json = nlohmann::json;
-        json schedule;
-    public:
-        virtual void initialize(int elements) override {
-            auto ptrs = this->allocate(this->options_.inputs, elements);
-            auto filePath = options->plinkScheduleFile;
-            std::ifstream i("plink.json");
-            i >> schedule;
-
-            //figure out my schedule.
-            std::vector<shared_ptr<Algorithm>> mySchedule;
-            int layer = 0;
-            for (json::iterator it = schedule.begin(); it != schedule.end(); ++schedule) {
-                json layerSchedule = *it;
-                for (json::iterator sched = layerSchedule.begin(); sched != schedule.end(); sched++)
-                {
-                    //"participants"
-                    //"Algorithm"
-                    json obj = *sched;
-                    std::vector<int> participants = obj["particpants"];
-                    std::string algorithm = obj["algorithm"];
-                    std::string groupId = obj["groupId"];
-                    auto fnd = std::find(participants.begin(), participants.end(), this->options_.contextRank);
-                    if (fnd != participants.end())
-                    {
-                        //needs to translate this context_rank (aka node id) to an actual context in this set of collectives.
-                        auto rnk = fnd - participants.end();
-                        //i should queue this task for me.
-
-                        std::shared_ptr<Context> pCtx = std::make_shared<::gloo::Context>(rnk, participants.size(), 2, groupId);
-                        //create an algorithm.
-                        if (algorithm == "allgather_ring") {
-                            fn = [&](std::shared_ptr<Context>& context) {
-                                return gloo::make_unique<AllgatherBenchmark<T>>(context, x);
-                            };
-                        }
-                        else if (algorithm == "allreduce_ring") {
-                            fn = [&](std::shared_ptr<Context>& context) {
-                                return gloo::make_unique<AllreduceBenchmark<AllreduceRing<T>, T>>(
-                                    context, x);
-                            };
-                        }
-                        else if (algorithm == "allreduce_ring_chunked") {
-                            fn = [&](std::shared_ptr<Context>& context) {
-                                return gloo::make_unique<
-                                    AllreduceBenchmark<AllreduceRingChunked<T>, T>>(context, x);
-                            };
-                        }
-                        else if (algorithm == "allreduce_halving_doubling") {
-                            fn = [&](std::shared_ptr<Context>& context) {
-                                return gloo::make_unique<
-                                    AllreduceBenchmark<AllreduceHalvingDoubling<T>, T>>(context, x);
-                            };
-                        }
-                        else if (algorithm == "allreduce_bcube") {
-                            fn = [&](std::shared_ptr<Context>& context) {
-                                return gloo::make_unique<
-                                    AllreduceBenchmark<AllreduceBcube<T>, T>>(context, x);
-                            };
-                        }
-                        //I can be only in one schedule in one layer.
-                        //add to my context.
-
-                        pCtx->connectFullMesh();
-                    }
-
-                }
-                layer++;
-            }
-        }
-    };
-
-    template <typename T>
-    class BarrierAllToAllBenchmark : public Benchmark<T> {
-        using Benchmark<T>::Benchmark;
-    public:
-        virtual void initialize(int /* unused */) override {
-            this->algorithm_.reset(new BarrierAllToAll(this->context_));
-        }
-    };
-
-    template <typename T>
-    class BarrierAllToOneBenchmark : public Benchmark<T> {
-        using Benchmark<T>::Benchmark;
-    public:
-        virtual void initialize(int /* unused */) override {
-            // This tool measures at rank=0, so use root=1 for the all to one
-            // barrier to measure the end-to-end latency (otherwise we might
-            // not account for the send-to-root part of the algorithm).
-            this->algorithm_.reset(new BarrierAllToOne(this->context_, 1));
-        }
-    };
-
-    template <typename T>
-    class BroadcastOneToAllBenchmark : public Benchmark<T> {
-        using Benchmark<T>::Benchmark;
-    public:
-        virtual void initialize(int elements) override {
-            auto ptrs = this->allocate(this->options_.inputs, elements);
-            this->algorithm_.reset(
-                new BroadcastOneToAll<T>(this->context_, ptrs, elements, rootRank_));
-        }
-
-        virtual void verify() override {
-            const auto stride = this->context_->size * this->inputs_.size();
-            for (const auto& input : this->inputs_) {
-                for (int i = 0; i < input.size(); i++) {
-                    auto offset = i * stride;
-                    GLOO_ENFORCE_EQ(
-                        T(offset + rootRank_), input[i], "Mismatch at index: ", i);
-                }
-            }
-        }
-
-    protected:
-        const int rootRank_ = 0;
-    };
+		virtual void verify() override {
+			// Size is the total number of pointers across the context
+			const auto size = this->context_->size * this->inputs_.size();
+			// Expected is set to the expected value at ptr[0]
+			const auto expected = (size * (size - 1)) / 2;
+			// The stride between values at subsequent indices is equal to
+			// "size", and we have "size" of them. Therefore, after
+			// allreduce, the stride between expected values is "size^2".
+			const auto stride = size * size;
+			for (const auto& input : this->inputs_) {
+				for (int i = 0; i < input.size(); i++) {
+					auto offset = i * stride;
+					GLOO_ENFORCE_EQ(
+						T(offset + expected), input[i], "Mismatch at index: ", i);
+				}
+			}
+		}
+	};
 
 
-    template <typename T>
-    class PairwiseExchangeBenchmark : public Benchmark<T> {
-        using Benchmark<T>::Benchmark;
-    public:
-        virtual void initialize(int elements) override {
-            this->algorithm_.reset(new PairwiseExchange(
-                this->context_, elements, this->getOptions().destinations));
-        }
-    };
+	template <typename T>
+	class PLinkScheduleBenchmark : public Benchmark<T>
+	{
+		using Benchmark<T>::Benchmark;
+		using json = nlohmann::json;
+		json schedule;
+	public:
+		virtual void initialize(int elements) override {
+			auto ptrs = this->allocate(this->options_.inputs, elements);
+			auto filePath = options->plinkScheduleFile;
+			std::ifstream i("plink.json");
+			i >> schedule;
 
-    template <typename T>
-    class ReduceScatterBenchmark : public Benchmark<T> {
-        using Benchmark<T>::Benchmark;
-    public:
-        virtual void initialize(int elements) override {
-            auto ptrs = this->allocate(this->options_.inputs, elements);
-            int rem = elements;
-            int chunkSize =
-                (elements + this->context_->size - 1) / this->context_->size;
-            for (int i = 0; i < this->context_->size; ++i) {
-                recvCounts_.push_back(std::min(chunkSize, rem));
-                rem = rem > chunkSize ? rem - chunkSize : 0;
-            }
-            this->algorithm_.reset(
-                new ReduceScatterHalvingDoubling<T>(
-                    this->context_, ptrs, elements, recvCounts_));
-        }
+			//figure out my schedule.
+			std::vector<shared_ptr<Algorithm>> mySchedule;
+			int layer = 0;
+			for (json::iterator it = schedule.begin(); it != schedule.end(); ++schedule)
+			{
+				json layerSchedule = *it;
+				for (json::iterator sched = layerSchedule.begin(); sched != schedule.end(); sched++)
+				{
+					//"participants"
+					//"Algorithm"
+					json obj = *sched;
+					std::vector<int> participants = obj["particpants"];
+					std::string algorithm = obj["algorithm"];
+					std::string groupId = obj["groupId"];
+					auto fnd = std::find(participants.begin(), participants.end(), this->options_.contextRank);
+					if (fnd != participants.end())
+					{
+						//needs to translate this context_rank (aka node id) to an actual context in this set of collectives.
+						auto rnk = fnd - participants.end();
+						//i should queue this task for me.
 
-        virtual void verify() override {
-            // Size is the total number of pointers across the context
-            const auto size = this->context_->size * this->inputs_.size();
-            // Expected is set to the expected value at ptr[0]
-            const auto expected = (size * (size - 1)) / 2;
-            // The stride between values at subsequent indices is equal to
-            // "size", and we have "size" of them. Therefore, after
-            // reduce-scatter, the stride between expected values is "size^2".
-            const auto stride = size * size;
-            for (const auto& input : this->inputs_) {
-                int numElemsSoFar = 0;
-                for (int i = 0; i < this->context_->rank; ++i) {
-                    numElemsSoFar += recvCounts_[i];
-                }
-                for (int i = 0; i < recvCounts_[this->context_->rank]; ++i) {
-                    auto offset = (numElemsSoFar + i) * stride;
-                    GLOO_ENFORCE_EQ(
-                        T(offset + expected), input[i], "Mismatch at index: ", i);
-                }
-            }
-        }
+						std::shared_ptr<Context> pCtx = std::make_shared<::gloo::Context>(rnk, participants.size(), 2, groupId);
+						//create an algorithm.
+						shared_ptr<Algorithm> algo;
+						if (algorithm == "allgather_ring") {
+							algo = std::make_shared<AllgatherRing<T>>(pCtx);
+						}
+						else if (algorithm == "allreduce_ring") {
+							algo = std::make_shared<AllreduceRing<T>>(pCtx);
+						}
+						else if (algorithm == "allreduce_ring_chunked") {
+							algo = std::make_shared<AllreduceRingChunked<T>>(pCtx);
+						}
+						else if (algorithm == "allreduce_halving_doubling") {
+							algo = std::make_shared<AllreduceHalvingDoubling<T>>(pCtx);
+						}
+						else if (algorithm == "allreduce_bcube") {
+							algo = std::make_shared<AllreduceBcube<T>>(pCtx);
+						};
+					}
+					//I can be only in one schedule in one layer.
+					//add to my context.
+					//need to initialize context, because the _backing context will not be sufficient for all schedules.
+					pCtx->connectFullMesh();
+					mySchedule.push_back(algo);
+				}
+			}
+			this->algorithm_ = std::make_shared<MultiphaseAlgorithm>(mySchedule);
+			layer++;
+		}
+	}
+};
 
-    protected:
-        std::vector<int> recvCounts_;
-    };
+template <typename T>
+class BarrierAllToAllBenchmark : public Benchmark<T> {
+	using Benchmark<T>::Benchmark;
+public:
+	virtual void initialize(int /* unused */) override {
+		this->algorithm_.reset(new BarrierAllToAll(this->context_));
+	}
+};
+
+template <typename T>
+class BarrierAllToOneBenchmark : public Benchmark<T> {
+	using Benchmark<T>::Benchmark;
+public:
+	virtual void initialize(int /* unused */) override {
+		// This tool measures at rank=0, so use root=1 for the all to one
+		// barrier to measure the end-to-end latency (otherwise we might
+		// not account for the send-to-root part of the algorithm).
+		this->algorithm_.reset(new BarrierAllToOne(this->context_, 1));
+	}
+};
+
+template <typename T>
+class BroadcastOneToAllBenchmark : public Benchmark<T> {
+	using Benchmark<T>::Benchmark;
+public:
+	virtual void initialize(int elements) override {
+		auto ptrs = this->allocate(this->options_.inputs, elements);
+		this->algorithm_.reset(
+			new BroadcastOneToAll<T>(this->context_, ptrs, elements, rootRank_));
+	}
+
+	virtual void verify() override {
+		const auto stride = this->context_->size * this->inputs_.size();
+		for (const auto& input : this->inputs_) {
+			for (int i = 0; i < input.size(); i++) {
+				auto offset = i * stride;
+				GLOO_ENFORCE_EQ(
+					T(offset + rootRank_), input[i], "Mismatch at index: ", i);
+			}
+		}
+	}
+
+protected:
+	const int rootRank_ = 0;
+};
+
+
+template <typename T>
+class PairwiseExchangeBenchmark : public Benchmark<T> {
+	using Benchmark<T>::Benchmark;
+public:
+	virtual void initialize(int elements) override {
+		this->algorithm_.reset(new PairwiseExchange(
+			this->context_, elements, this->getOptions().destinations));
+	}
+};
+
+template <typename T>
+class ReduceScatterBenchmark : public Benchmark<T> {
+	using Benchmark<T>::Benchmark;
+public:
+	virtual void initialize(int elements) override {
+		auto ptrs = this->allocate(this->options_.inputs, elements);
+		int rem = elements;
+		int chunkSize =
+			(elements + this->context_->size - 1) / this->context_->size;
+		for (int i = 0; i < this->context_->size; ++i) {
+			recvCounts_.push_back(std::min(chunkSize, rem));
+			rem = rem > chunkSize ? rem - chunkSize : 0;
+		}
+		this->algorithm_.reset(
+			new ReduceScatterHalvingDoubling<T>(
+				this->context_, ptrs, elements, recvCounts_));
+	}
+
+	virtual void verify() override {
+		// Size is the total number of pointers across the context
+		const auto size = this->context_->size * this->inputs_.size();
+		// Expected is set to the expected value at ptr[0]
+		const auto expected = (size * (size - 1)) / 2;
+		// The stride between values at subsequent indices is equal to
+		// "size", and we have "size" of them. Therefore, after
+		// reduce-scatter, the stride between expected values is "size^2".
+		const auto stride = size * size;
+		for (const auto& input : this->inputs_) {
+			int numElemsSoFar = 0;
+			for (int i = 0; i < this->context_->rank; ++i) {
+				numElemsSoFar += recvCounts_[i];
+			}
+			for (int i = 0; i < recvCounts_[this->context_->rank]; ++i) {
+				auto offset = (numElemsSoFar + i) * stride;
+				GLOO_ENFORCE_EQ(
+					T(offset + expected), input[i], "Mismatch at index: ", i);
+			}
+		}
+	}
+
+protected:
+	std::vector<int> recvCounts_;
+};
 
 } // namespace
 
@@ -335,15 +325,15 @@ namespace {
   r.run(fn);
 
 int main(int argc, char** argv) {
-    auto x = benchmark::parseOptions(argc, argv);
-    if (x.benchmark == "pairwise_exchange") {
-        RUN_BENCHMARK(char);
-    }
-    else if (x.halfPrecision) {
-        RUN_BENCHMARK(float16);
-    }
-    else {
-        RUN_BENCHMARK(float);
-    }
-    return 0;
+	auto x = benchmark::parseOptions(argc, argv);
+	if (x.benchmark == "pairwise_exchange") {
+		RUN_BENCHMARK(char);
+	}
+	else if (x.halfPrecision) {
+		RUN_BENCHMARK(float16);
+	}
+	else {
+		RUN_BENCHMARK(float);
+	}
+	return 0;
 }
