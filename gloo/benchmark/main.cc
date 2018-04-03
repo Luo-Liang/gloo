@@ -8,7 +8,8 @@
  */
 
 #include <memory>
-
+#include <fstream>
+#include <vector>
 #include "gloo/allgather_ring.h"
 #include "gloo/allreduce_halving_doubling.h"
 #include "gloo/allreduce_bcube.h"
@@ -27,7 +28,8 @@
 #include "gloo/rendezvous/prefix_store.h"
 #include "gloo/benchmark/benchmark.h"
 #include "gloo/benchmark/runner.h"
-#include "third-party/json/single_include/nlohmann/json.hpp"
+#include "third-party/nlohmann/single_include/nlohmann/json.hpp"
+#include "gloo/transport/tcp/device.h"
 
 using namespace gloo;
 using namespace gloo::benchmark;
@@ -102,11 +104,34 @@ namespace {
 	{
 		using Benchmark<T>::Benchmark;
 		using json = nlohmann::json;
+  	std::vector<std::shared_ptr<transport::Device>> transportDevices_;
 		//json schedule;
 	public:
-		virtual void initialize(int elements) override {
+		virtual void initialize(int elements) override 
+		{
+			if (this->options_.transport == "tcp") 
+			{
+				if (this->options_.tcpDevice.empty()) 
+				{
+					transport::tcp::attr attr;
+					transportDevices_.push_back(transport::tcp::CreateDevice(attr));
+				} 
+				else 
+				{
+					for (const auto& name : this->options_.tcpDevice)
+					{
+						transport::tcp::attr attr;
+						attr.iface = name;
+						transportDevices_.push_back(transport::tcp::CreateDevice(attr));
+					}
+				}
+  		}
+			else
+			{
+				GLOO_ENFORCE(false);
+			}
 			auto ptrs = this->allocate(this->options_.inputs, elements);
-			auto filePath = this->options_->plinkScheduleFile;
+			auto filePath = this->options_.plinkScheduleFile;
 			std::ifstream i("plink.json");
 			json schedule(i);
 
@@ -131,7 +156,7 @@ namespace {
 						auto rnk = fnd - participants.end();
 						//i should queue this task for me.
 
-						std::shared_ptr<Context> pCtx = std::make_shared<::gloo::Context>(rnk, participants.size(), 2, groupId);
+						auto pCtx = std::make_shared<::gloo::rendezvous::Context>(rnk, participants.size());
 						//create an algorithm.
 						std::shared_ptr<gloo::Algorithm> algo = NULL;
 						if (algorithm == "allgather_ring") {
@@ -152,15 +177,15 @@ namespace {
 						//I can be only in one schedule in one layer.
 						//add to my context.
 						//need to initialize context, because the _backing context will not be sufficient for all schedules.
-  					gloo::rendezvous::RedisStore redisStore(options_.redisHost, options_.redisPort);
+  					gloo::rendezvous::RedisStore redisStore(this->options_.redisHost, this->options_.redisPort);
   					gloo::rendezvous::PrefixStore prefixStore(groupId, redisStore);		
-						pCtx->connectFullMesh(prefixStore);
+						pCtx->connectFullMesh(prefixStore, transportDevices_.at(0));
 						mySchedule.push_back(algo);
 					}
 
 				}
 			}
-			this->algorithm_ = std::make_shared<MultiphaseAlgorithm>(mySchedule);
+			this->algorithm_ = std::make_unique<MultiphaseAlgorithm>(mySchedule);
 			layer++;
 		}
 	};
@@ -319,8 +344,8 @@ protected:
   else if(x.benchmark == "plink")                                         \
   {                                                                     \
     fn = [&](std::shared_ptr<Context>& context) {                        \
-		return gloo::make_unique<PLinkScheduleBenchmark<T>>(context, x);  \
-	}                                                                     \
+			return gloo::make_unique<PLinkScheduleBenchmark<T>>(context, x);  \
+		};                                                                  \
   }                                                                      \
   if (!fn) {                                                               \
     GLOO_ENFORCE(false, "Invalid algorithm: ", x.benchmark);               \

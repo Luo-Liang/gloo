@@ -151,7 +151,7 @@ struct options parseOptions(int argc, char** argv) {
       {"tcp-device", required_argument, nullptr, 0x1010},
       {"base", required_argument, nullptr, 0x1011},
       {"shared-path", required_argument, nullptr, 0x1012 },
-      {"plink-schedule-file", required_argument, nullptr, 0x1013}
+      {"plink-schedule-file", required_argument, nullptr, 0x1013},
       {"help", no_argument, nullptr, 0xffff},
       {nullptr, 0, nullptr, 0}};
 

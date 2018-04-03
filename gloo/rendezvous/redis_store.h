@@ -11,7 +11,7 @@
 
 #include <string>
 #include <vector>
-
+#define HIREDIS_NESTED_INCLUDE
 #ifdef HIREDIS_NESTED_INCLUDE
 #include <hiredis/hiredis.h>
 #else

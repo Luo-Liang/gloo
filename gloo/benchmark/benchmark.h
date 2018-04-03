@@ -18,7 +18,15 @@
 #include "gloo/benchmark/options.h"
 #include "gloo/context.h"
 #include "gloo/common/common.h"
-
+namespace std
+{
+  // note: this implementation does not disable this overload for array types
+  template<typename T, typename... Args>
+  std::unique_ptr<T> make_unique(Args&&... args)
+  {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+  }
+} //no make_unique in c++11
 namespace gloo {
 namespace benchmark {
 
