@@ -45,6 +45,10 @@ namespace gloo {
 		{
 			hierarchy = levels;
 		}
+        ~MultiphaseAlgorithm()
+        {
+
+        }
 
 		virtual void run() override
 		{
