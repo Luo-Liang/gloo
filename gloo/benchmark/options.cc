@@ -286,7 +286,7 @@ struct options parseOptions(int argc, char** argv) {
       }
 	  case 0x1013: // --plink-schedule-file
 	  {
-		  result.plinkSchedule = std::string(optarg, strlen(optarg));
+		  result.plinkScheduleFile = std::string(optarg, strlen(optarg));
 		  break;
 	  }
       case 0xffff: // --help

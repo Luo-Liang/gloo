@@ -105,6 +105,8 @@ namespace {
 		using Benchmark<T>::Benchmark;
 		using json = nlohmann::json;
   	std::vector<std::shared_ptr<transport::Device>> transportDevices_;
+		std::vector<T> outputs_;
+
 		//json schedule;
 	public:
 		virtual void initialize(int elements) override 
@@ -131,10 +133,12 @@ namespace {
 				GLOO_ENFORCE(false);
 			}
 			auto ptrs = this->allocate(this->options_.inputs, elements);
-			auto filePath = this->options_.plinkScheduleFile;
-			std::ifstream i("plink.json");
-			json schedule(i);
+			outputs_.resize(this->options_.inputs * this->context_->size * elements);
 
+			auto filePath = this->options_.plinkScheduleFile;
+			std::ifstream i(filePath);
+			json schedule(i);
+			//build addresses.
 			//figure out my schedule.
 			std::vector<std::shared_ptr<Algorithm>> mySchedule;
 			int layer = 0;
@@ -160,25 +164,26 @@ namespace {
 						//create an algorithm.
 						std::shared_ptr<gloo::Algorithm> algo = NULL;
 						if (algorithm == "allgather_ring") {
-							algo = std::make_shared<AllgatherRing<T>>(pCtx);
+							algo = std::make_shared<AllgatherRing<T>>(pCtx, this->getInputs(), outputs_.data(), elements);
 						}
 						else if (algorithm == "allreduce_ring") {
-							algo = std::make_shared<AllreduceRing<T>>(pCtx);
+							algo = std::make_shared<AllreduceRing<T>>(pCtx,ptrs,elements);
 						}
 						else if (algorithm == "allreduce_ring_chunked") {
-							algo = std::make_shared<AllreduceRingChunked<T>>(pCtx);
+							algo = std::make_shared<AllreduceRingChunked<T>>(pCtx,ptrs,elements);
 						}
 						else if (algorithm == "allreduce_halving_doubling") {
-							algo = std::make_shared<AllreduceHalvingDoubling<T>>(pCtx);
+							algo = std::make_shared<AllreduceHalvingDoubling<T>>(pCtx,ptrs,elements);
 						}
 						else if (algorithm == "allreduce_bcube") {
-							algo = std::make_shared<AllreduceBcube<T>>(pCtx);
+							algo = std::make_shared<AllreduceBcube<T>>(pCtx,ptrs,elements);
 						};
 						//I can be only in one schedule in one layer.
 						//add to my context.
 						//need to initialize context, because the _backing context will not be sufficient for all schedules.
   					gloo::rendezvous::RedisStore redisStore(this->options_.redisHost, this->options_.redisPort);
-  					gloo::rendezvous::PrefixStore prefixStore(groupId, redisStore);		
+  					gloo::rendezvous::PrefixStore prefixStore(groupId, redisStore);	
+						GLOO_ENFORCE(transportDevices_.size() > 0 );	
 						pCtx->connectFullMesh(prefixStore, transportDevices_.at(0));
 						mySchedule.push_back(algo);
 					}
