@@ -177,12 +177,15 @@ namespace {
 						}
 						else if (algorithm == "allreduce_bcube") {
 							algo = std::make_shared<AllreduceBcube<T>>(pCtx,ptrs,elements);
+						}
+						else if (algorithm == "broadcast_one_to_all") {
+						  algo = std::make_shared<BroadcastOneToAll<T>>(pCtx,ptrs,elements); //rootRank is automatically 0.
 						};
 						//I can be only in one schedule in one layer.
 						//add to my context.
 						//need to initialize context, because the _backing context will not be sufficient for all schedules.
-  					gloo::rendezvous::RedisStore redisStore(this->options_.redisHost, this->options_.redisPort);
-  					gloo::rendezvous::PrefixStore prefixStore(groupId, redisStore);	
+						gloo::rendezvous::RedisStore redisStore(this->options_.redisHost, this->options_.redisPort);
+						gloo::rendezvous::PrefixStore prefixStore(groupId, redisStore);	
 						GLOO_ENFORCE(transportDevices_.size() > 0 );	
 						pCtx->connectFullMesh(prefixStore, transportDevices_.at(0));
 						mySchedule.push_back(algo);
