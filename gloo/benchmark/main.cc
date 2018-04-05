@@ -91,6 +91,10 @@ namespace {
 			for (const auto& input : this->inputs_) {
 				for (int i = 0; i < input.size(); i++) {
 					auto offset = i * stride;
+					if(T(offset + expected) != input[i])
+					{
+						printf("mismatch %f vs %f diff=%f\n", T(offset+expected), input[i], T(offset+expected)-input[i]);
+					}
 					GLOO_ENFORCE_EQ(
 						T(offset + expected), input[i], "Mismatch at index: ", i);
 				}
@@ -109,6 +113,23 @@ namespace {
 
 		//json schedule;
 	public:
+		virtual void verify() override {
+			// Size is the total number of pointers across the context
+			const auto size = this->context_->size * this->inputs_.size();
+			// Expected is set to the expected value at ptr[0]
+			const auto expected = (size * (size - 1)) / 2;
+			// The stride between values at subsequent indices is equal to
+			// "size", and we have "size" of them. Therefore, after
+			// allreduce, the stride between expected values is "size^2".
+			const auto stride = size * size;
+			for (const auto& input : this->inputs_) {
+				for (int i = 0; i < input.size(); i++) {
+					auto offset = i * stride;
+					GLOO_ENFORCE_EQ(
+						T(offset + expected), input[i], "Mismatch at index: ", i);
+				}
+			}
+		}
 		virtual void initialize(int elements) override 
 		{
 			if (this->options_.transport == "tcp") 
@@ -137,7 +158,7 @@ namespace {
 
 			auto filePath = this->options_.plinkScheduleFile;
 			std::ifstream i(filePath);
-			json schedule(i);
+			json schedule = json::parse(i);
 			//build addresses.
 			//figure out my schedule.
 			std::vector<std::shared_ptr<Algorithm>> mySchedule;
@@ -145,22 +166,29 @@ namespace {
 			for (json::iterator it = schedule.begin(); it != schedule.end(); it++)
 			{
 				json layerSchedule = *it;
-				for (json::iterator sched = layerSchedule.begin(); sched != schedule.end(); sched++)
+				for (json::iterator sched = layerSchedule.begin(); sched != layerSchedule.end(); sched++)
 				{
 					//"participants"
 					//"Algorithm"
 					json obj = *sched;
-					std::vector<int> participants = obj["particpants"];
+					std::vector<int> participants = obj["participants"];
 					std::string algorithm = obj["algorithm"];
 					std::string groupId = obj["groupId"];
 					auto fnd = std::find(participants.begin(), participants.end(), this->options_.contextRank);
 					if (fnd != participants.end())
 					{
+						//printf("plink initialization layer %d starting. rank=%d. gid=%s\n", layer, this->options_.contextRank,groupId.c_str());
+
 						//needs to translate this context_rank (aka node id) to an actual context in this set of collectives.
-						auto rnk = fnd - participants.end();
+						auto rnk = fnd - participants.begin();
 						//i should queue this task for me.
 
 						auto pCtx = std::make_shared<::gloo::rendezvous::Context>(rnk, participants.size());
+						//printf("plink initialization layer %d starting. rank=%d. gid=%s, localrank = %d, max=%d\n", layer, this->options_.contextRank,groupId.c_str(), rnk, participants.size());
+						gloo::rendezvous::RedisStore redisStore(this->options_.redisHost, this->options_.redisPort);
+						gloo::rendezvous::PrefixStore prefixStore(groupId, redisStore);	
+						GLOO_ENFORCE(transportDevices_.size() > 0 );	
+						pCtx->connectFullMesh(prefixStore, transportDevices_.at(0));
 						//create an algorithm.
 						std::shared_ptr<gloo::Algorithm> algo = NULL;
 						if (algorithm == "allgather_ring") {
@@ -184,17 +212,17 @@ namespace {
 						//I can be only in one schedule in one layer.
 						//add to my context.
 						//need to initialize context, because the _backing context will not be sufficient for all schedules.
-						gloo::rendezvous::RedisStore redisStore(this->options_.redisHost, this->options_.redisPort);
-						gloo::rendezvous::PrefixStore prefixStore(groupId, redisStore);	
-						GLOO_ENFORCE(transportDevices_.size() > 0 );	
-						pCtx->connectFullMesh(prefixStore, transportDevices_.at(0));
+				
 						mySchedule.push_back(algo);
+  					//printf("plink initialization layer %d done. rank=%d. gid = %s\n", layer, this->options_.contextRank, groupId.c_str());
+
 					}
 
 				}
+				layer++;
 			}
-			this->algorithm_ = std::make_unique<MultiphaseAlgorithm>(mySchedule);
-			layer++;
+			this->algorithm_ = std::make_unique<MultiphaseAlgorithm>(mySchedule, this->context_);
+			//printf("plink initialization done. rank=%d\n", this->options_.contextRank);
 		}
 	};
 
