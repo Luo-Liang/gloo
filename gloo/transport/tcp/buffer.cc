@@ -41,6 +41,11 @@ void Buffer::handleRecvCompletion() {
   recvCv_.notify_one();
 }
 
+bool Buffer::hasRecved() override
+{
+  return recvCompletions_ != 0;
+}
+
 void Buffer::waitRecv() {
   // If the pair is in synchronous mode, the current thread is
   // responsible for doing reads.

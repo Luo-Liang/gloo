@@ -14,6 +14,10 @@ namespace transport {
 
 // Have to provide implementation for pure virtual destructor.
 Buffer::~Buffer() {}
-
+bool Buffer::hasRecved()
+{
+    waitRecv();
+    return true;
+}
 } // namespace transport
 } // namespace gloo

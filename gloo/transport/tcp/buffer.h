@@ -49,7 +49,7 @@ class Buffer : public ::gloo::transport::Buffer {
   std::condition_variable recvCv_;
   std::condition_variable sendCv_;
 
-  int recvCompletions_;
+  volatile int recvCompletions_;
   int sendCompletions_;
   std::atomic<int> sendPending_;
 
