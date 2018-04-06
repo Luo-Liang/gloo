@@ -74,6 +74,8 @@ static void usage(int status, const char* argv0) {
                               "pairwise exchange benchmark");
   X("Algorithm parameters:");
   X("      --base   The base for allreduce_bcube (if applicable)");
+  X("PLink Technologies:")
+  X("      --plink-schedule-file   The PLink Schedule File.")
   X("");
   X("BENCHMARK is one of:");
   X("  allreduce_ring");
@@ -83,6 +85,7 @@ static void usage(int status, const char* argv0) {
   X("  barrier_all_to_all");
   X("  broadcast_one_to_all");
   X("  pairwise_exchange");
+  X("  plink")
   X("");
 
   exit(status);

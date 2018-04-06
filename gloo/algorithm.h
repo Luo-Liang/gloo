@@ -41,7 +41,7 @@ namespace gloo {
 	{
 		std::vector<std::shared_ptr<Algorithm>> hierarchy;
 	public:
-		MultiphaseAlgorithm(std::vector<std::shared_ptr<Algorithm>>& levels) : Algorithm(NULL)
+		MultiphaseAlgorithm(std::vector<std::shared_ptr<Algorithm>>& levels, std::shared_ptr<Context> ctx) : Algorithm(ctx)
 		{
 			hierarchy = levels;
 		}

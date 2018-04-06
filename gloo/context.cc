@@ -14,7 +14,7 @@
 
 namespace gloo {
 
-static const std::chrono::seconds kTimeoutDefault = std::chrono::seconds(30);
+static const std::chrono::seconds kTimeoutDefault =  std::chrono::seconds(600);
 
 Context::Context(int rank, int size, int base)
     : rank(rank),

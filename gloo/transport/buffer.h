@@ -30,7 +30,7 @@ class Buffer {
   void send() {
     send(0, size_);
   }
-
+  virtual bool hasRecved();
   virtual void waitRecv() = 0;
   virtual void waitSend() = 0;
 

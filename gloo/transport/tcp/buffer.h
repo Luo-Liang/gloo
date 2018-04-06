@@ -42,14 +42,14 @@ class Buffer : public ::gloo::transport::Buffer {
 
   void signalError(const std::exception_ptr& ex);
   void checkErrorState();
-
+  bool hasRecved() override;
   Pair* pair_;
 
   std::mutex m_;
   std::condition_variable recvCv_;
   std::condition_variable sendCv_;
 
-  int recvCompletions_;
+  volatile int recvCompletions_;
   int sendCompletions_;
   std::atomic<int> sendPending_;
 
