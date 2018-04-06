@@ -1,0 +1,35 @@
+[
+    [
+        {
+            "participants": [0,1,4],
+            "algorithm" : "phub_reduce",
+            "groupId" : "layer1_group1"
+        },
+	{
+            "participants": [2,3,5,6,7],
+            "algorithm" : "phub_reduce",
+            "groupId" : "layer1_group2"
+        }
+
+    ],
+    [
+        {
+            "participants": [1,6],
+            "algorithm" : "allreduce_halving_doubling",
+            "groupId" : "layer2_group1"
+        }
+    ],
+    [
+        {
+            "participants": [1,0,4],
+            "algorithm" : "broadcast_one_to_all",
+            "groupId" : "layer3_group1"
+        },
+	{
+            "participants": [6,2,3,5,7],
+            "algorithm" : "broadcast_one_to_all",
+            "groupId" : "layer3_group2"
+        }
+
+    ]
+]
