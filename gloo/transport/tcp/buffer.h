@@ -42,7 +42,7 @@ class Buffer : public ::gloo::transport::Buffer {
 
   void signalError(const std::exception_ptr& ex);
   void checkErrorState();
-
+  bool hasRecved() override;
   Pair* pair_;
 
   std::mutex m_;

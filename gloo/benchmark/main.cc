@@ -15,6 +15,7 @@
 #include "gloo/allreduce_bcube.h"
 #include "gloo/allreduce_ring.h"
 #include "gloo/allreduce_ring_chunked.h"
+#include "gloo/PHubReduce.h"
 #include "gloo/barrier_all_to_all.h"
 #include "gloo/barrier_all_to_one.h"
 #include "gloo/broadcast_one_to_all.h"
@@ -91,10 +92,6 @@ namespace {
 			for (const auto& input : this->inputs_) {
 				for (int i = 0; i < input.size(); i++) {
 					auto offset = i * stride;
-					if(T(offset + expected) != input[i])
-					{
-						printf("mismatch %f vs %f diff=%f\n", T(offset+expected), input[i], T(offset+expected)-input[i]);
-					}
 					GLOO_ENFORCE_EQ(
 						T(offset + expected), input[i], "Mismatch at index: ", i);
 				}
@@ -208,7 +205,14 @@ namespace {
 						}
 						else if (algorithm == "broadcast_one_to_all") {
 						  algo = std::make_shared<BroadcastOneToAll<T>>(pCtx,ptrs,elements); //rootRank is automatically 0.
-						};
+						}
+						else if(algorithm == "phub_reduce")
+						{
+							algo = std::make_shared<PHubReduce<T>>(pCtx, ptrs, elements);
+						}
+						else{
+							GLOO_ENFORCE(false);
+						}
 						//I can be only in one schedule in one layer.
 						//add to my context.
 						//need to initialize context, because the _backing context will not be sufficient for all schedules.

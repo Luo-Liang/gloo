@@ -25,12 +25,14 @@ class PHubReduce : public Algorithm {
       const std::shared_ptr<Context>& context,
       const std::vector<T*>& ptrs,
       int count,
-      int rootRank = 0)
+      int rootRank = 0,
+      const ReductionFunction<T>* fn = ReductionFunction<T>::sum)
       : Algorithm(context),
         ptrs_(ptrs),
         count_(count),
         bytes_(count * sizeof(T)),
-        rootRank_(rootRank) {
+        rootRank_(rootRank),
+        fn_(fn) {
     GLOO_ENFORCE_GE(rootRank_, 0);
     GLOO_ENFORCE_LT(rootRank_, contextSize_);
 
@@ -55,7 +57,7 @@ class PHubReduce : public Algorithm {
         }
       } else {
         auto ptr = ptrs[0];
-        sender_ = make_unique<forReceiver>();
+        sender_ = make_unique<forSender>();
         auto& rootPair = context_->getPair(rootRank_);
         sender_->clearToSendBuffer = rootPair->createRecvBuffer(
             slot, &sender_->dummy, sizeof(sender_->dummy));
@@ -80,13 +82,13 @@ class PHubReduce : public Algorithm {
     if (contextRank_ == rootRank_) 
     {
       // Fire off send operations after receiving clear to send
-      for (auto i = 0; i < contextSize_; i++) {
-        if (i == contextRank_) {
-          continue;
-        }
-        receiver_[i]->clearToSendBuffer->send();
-        //receiver_[i]->sendBuffer->send();
-      }
+      //for (auto i = 0; i < contextSize_; i++) {
+      //  if (i == contextRank_) {
+      //    continue;
+      //  }
+      //  receiver_[i]->clearToSendBuffer->send();
+      //receiver_[i]->sendBuffer->send();
+      //}
       // Wait for all recv operations to complete
       //std::vector<bool> recvedFlags(contextSize_);
       int recvedCnt = 1;
@@ -108,15 +110,14 @@ class PHubReduce : public Algorithm {
       //broadcastLocally();
     } 
     else {
-      sender_->clearToSendBuffer->send();
+      //sender_->clearToSendBuffer->waitRecv();
+      sender_->sendBuffer->send();
       sender_->sendBuffer->waitSend();
       //didnt do anything.
       // Broadcast locally after receiving from root
       //broadcastLocally();
     }
   }
-
- protected:
  ~PHubReduce()
  {
    for(T* ptr : actualRecvBuffer)
@@ -127,6 +128,8 @@ class PHubReduce : public Algorithm {
      }
    }
  }
+ protected:
+
   // Broadcast from root pointer to other pointers
   void broadcastLocally() {
     for (auto i = 0; i < ptrs_.size(); i++) {
@@ -142,7 +145,8 @@ class PHubReduce : public Algorithm {
   const int count_;
   const int bytes_;
   const int rootRank_;
-  const int rootPointerRank_;
+  const int rootPointerRank_ = 0;
+	const ReductionFunction<T>* fn_;
 
   // For the sender (root)
   using forSender = struct {

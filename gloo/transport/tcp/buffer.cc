@@ -41,7 +41,7 @@ void Buffer::handleRecvCompletion() {
   recvCv_.notify_one();
 }
 
-bool Buffer::hasRecved() override
+bool Buffer::hasRecved() 
 {
   return recvCompletions_ != 0;
 }
