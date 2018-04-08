@@ -383,6 +383,7 @@ void Runner::printDistribution(
   auto totalNanos = latency.sum() / options_.threads;
   auto totalBytesPerSec = (totalBytes * 1e9f) / totalNanos;
   auto totalGigaBytesPerSec = totalBytesPerSec / (1024 * 1024 * 1024);
+  auto systemWideGigaBytesPerSec = totalGigaBytesPerSec * options_.contextSize;
 
   std::cout << std::setw(11) << elements;
   std::cout << std::setw(11) << (latency.min() / div);
@@ -390,7 +391,7 @@ void Runner::printDistribution(
   std::cout << std::setw(11) << (latency.percentile(0.99) / div);
   std::cout << std::setw(11) << (latency.max() / div);
   std::cout << std::fixed << std::setprecision(3);
-  std::cout << std::setw(13) << totalGigaBytesPerSec;
+  std::cout << std::setw(13) << totalGigaBytesPerSec << "(" << systemWideGigaBytesPerSec << ")";
   std::cout << std::setw(11) << latency.size();
   std::cout << std::endl;
 }
