@@ -202,16 +202,18 @@ void Runner::run(BenchmarkFn<T>& fn) {
   }
 
   // Run sweep over number of elements
-  for (int i = 1; i <= 11; i *= 10) {
+  for (int i = 1; i <= 17; i ++) {
     int j = 1 << (i + 9);
     //std::vector<int> js = {i * 1, i * 2, i * 5};
     //for (auto& j : js) {
-      
-      if(j >= 100000)
-      {
-	      j = 100000 + (i - 9) * 10000;
-      }
+      printf("starting running %d\n", j);
+      //if(j >= 100000)
+      //{
+	    //  j = 100000 + (i - 9) * 10000;
+      //}
+      //printf("running %d\n", j);
       run(fn, j);
+      printf("done running %d\n", j);
     }
 }
 
