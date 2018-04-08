@@ -314,7 +314,7 @@ namespace gloo {
 						recvCounts_[stepsWithinBlock_ - 1] * sizeof(T));
 				}
 			}
-			printf("halving doubling conetxt = %d, count = %d\n", contextRank_, count_);
+			//printf("halving doubling conetxt = %d, count = %d\n", contextRank_, count_);
 			// Allgather
 			numItems = chunkSize_ << (steps_ - stepsWithinBlock_);
 			for (int i = stepsWithinBlock_ - 1; i >= 0; i--) {
@@ -339,7 +339,7 @@ namespace gloo {
 				// we're done dealing with the receive buffer.
 				sendNotificationBufs_[i]->send();
 			}
-			printf("halving doubling 1 conetxt = %d, count = %d\n", contextRank_, count_);
+			//printf("halving doubling 1 conetxt = %d, count = %d\n", contextRank_, count_);
 
 			// Broadcast ptrs_[0]
 			for (int i = 1; i < ptrs_.size(); i++) {
@@ -353,14 +353,14 @@ namespace gloo {
 				recvNotificationBufs_[i]->waitRecv();
 			}
 
-			printf("halving doubling 2 conetxt = %d, count = %d\n", contextRank_, count_);
+			//printf("halving doubling 2 conetxt = %d, count = %d\n", contextRank_, count_);
 			// We have to be sure the send to the smaller block (if any) has
 			// completed before returning. If we don't, the buffer contents may
 			// be modified by our caller.
 			if (sentToSmallerBlock) {
 				smallerBlockSendDataBuf_->waitSend();
 			}
-			printf("halving doubling 3 conetxt = %d, count = %d\n", contextRank_, count_);
+			//printf("halving doubling 3 conetxt = %d, count = %d\n", contextRank_, count_);
 
 		}
 
