@@ -25,7 +25,7 @@ option(BUILD_TEST "Build test binary (requires gtest)" OFF)
 option(BUILD_BENCHMARK "Build benchmark binary (requires hiredis)" OFF)
 
 # Option defaults (so they can be overwritten before declaring the option)
-set(USE_REDIS_DEFAULT OFF)
+set(USE_REDIS_DEFAULT ON)
 set(USE_IBVERBS_DEFAULT OFF)
 set(USE_NCCL_DEFAULT OFF)
 
@@ -60,7 +60,7 @@ include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 
 # Compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC -g")
 
 # Recurse into main project directory
 add_subdirectory(gloo)
