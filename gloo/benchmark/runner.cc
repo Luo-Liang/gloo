@@ -206,14 +206,14 @@ void Runner::run(BenchmarkFn<T>& fn) {
     int j = 1 << (i + 9);
     //std::vector<int> js = {i * 1, i * 2, i * 5};
     //for (auto& j : js) {
-      printf("starting running %d\n", j);
+     // printf("starting running %d\n", j);
       //if(j >= 100000)
       //{
 	    //  j = 100000 + (i - 9) * 10000;
       //}
       //printf("running %d\n", j);
       run(fn, j);
-      printf("done running %d\n", j);
+      //printf("done running %d\n", j);
     }
 }
 
