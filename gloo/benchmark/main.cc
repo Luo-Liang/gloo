@@ -107,7 +107,7 @@ namespace {
 		using json = nlohmann::json;
   	std::vector<std::shared_ptr<transport::Device>> transportDevices_;
 		std::vector<T> outputs_;
-
+		static int InitID;
 		//json schedule;
 	public:
 		virtual void verify() override {
@@ -183,7 +183,7 @@ namespace {
 						auto pCtx = std::make_shared<::gloo::rendezvous::Context>(rnk, participants.size());
 						//printf("plink initialization layer %d starting. rank=%d. gid=%s, localrank = %d, max=%d\n", layer, this->options_.contextRank,groupId.c_str(), rnk, participants.size());
 						gloo::rendezvous::RedisStore redisStore(this->options_.redisHost, this->options_.redisPort);
-						gloo::rendezvous::PrefixStore prefixStore(groupId, redisStore);	
+						gloo::rendezvous::PrefixStore prefixStore("run_" + std::to_string(InitID) + "/" + groupId, redisStore);	
 						GLOO_ENFORCE(transportDevices_.size() > 0 );	
 						pCtx->connectFullMesh(prefixStore, transportDevices_.at(0));
 						//create an algorithm.
@@ -226,6 +226,7 @@ namespace {
 				layer++;
 			}
 			this->algorithm_ = std::make_unique<MultiphaseAlgorithm>(mySchedule, this->context_);
+			InitID++;
 			//printf("plink initialization done. rank=%d\n", this->options_.contextRank);
 		}
 	};
@@ -392,7 +393,8 @@ protected:
   }                                                                        \
   Runner r(x);                                                             \
   r.run(fn);
-
+template <typename T>
+int PLinkScheduleBenchmark<T>::InitID = 0;
 int main(int argc, char** argv) {
 	auto x = benchmark::parseOptions(argc, argv);
 	if (x.benchmark == "pairwise_exchange") {
