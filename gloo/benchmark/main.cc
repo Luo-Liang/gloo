@@ -106,7 +106,7 @@ namespace {
 		using Benchmark<T>::Benchmark;
 		using json = nlohmann::json;
   	std::vector<std::shared_ptr<transport::Device>> transportDevices_;
-		std::vector<T> outputs_;
+		//std::vector<T> outputs_;
 		static int InitID;
 		//json schedule;
 	public:
@@ -151,7 +151,7 @@ namespace {
 				GLOO_ENFORCE(false);
 			}
 			auto ptrs = this->allocate(this->options_.inputs, elements);
-			outputs_.resize(this->options_.inputs * this->context_->size * elements);
+			//outputs_.resize(this->options_.inputs * this->context_->size * elements);
 
 			auto filePath = this->options_.plinkScheduleFile;
 			std::ifstream i(filePath);
@@ -188,10 +188,11 @@ namespace {
 						pCtx->connectFullMesh(prefixStore, transportDevices_.at(0));
 						//create an algorithm.
 						std::shared_ptr<gloo::Algorithm> algo = NULL;
-						if (algorithm == "allgather_ring") {
-							algo = std::make_shared<AllgatherRing<T>>(pCtx, this->getInputs(), outputs_.data(), elements);
-						}
-						else if (algorithm == "allreduce_ring") {
+						//if (algorithm == "allgather_ring") {
+						//	algo = std::make_shared<AllgatherRing<T>>(pCtx, this->getInputs(), outputs_.data(), elements);
+						//}
+						//else 
+						if (algorithm == "allreduce_ring") {
 							algo = std::make_shared<AllreduceRing<T>>(pCtx,ptrs,elements);
 						}
 						else if (algorithm == "allreduce_ring_chunked") {
