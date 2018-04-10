@@ -10,6 +10,7 @@
 #include <memory>
 #include <fstream>
 #include <vector>
+#include <unistd.h>
 #include "gloo/allgather_ring.h"
 #include "gloo/allreduce_halving_doubling.h"
 #include "gloo/allreduce_bcube.h"
@@ -129,6 +130,7 @@ namespace {
 		}
 		virtual void initialize(int elements) override 
 		{
+		
 			if (this->options_.transport == "tcp") 
 			{
 				if (this->options_.tcpDevice.empty()) 
@@ -398,6 +400,14 @@ template <typename T>
 int PLinkScheduleBenchmark<T>::InitID = 0;
 int main(int argc, char** argv) {
 	auto x = benchmark::parseOptions(argc, argv);
+	if(x.gdb)
+	{
+		int rem = 20;
+		while(rem-- > 0)
+		{
+			printf("[%d] is waiting for GDB attach %ds remaining.\n", x.contextRank,x.gdb);
+		}
+	}
 	if (x.benchmark == "pairwise_exchange") {
 		RUN_BENCHMARK(char);
 	}

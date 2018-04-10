@@ -46,6 +46,7 @@ struct options {
   // Suite configuration
   std::string benchmark;
   bool verify = false;
+  bool gdb = false;
   int elements = -1;
   long iterationCount = -1;
   long iterationTimeNanos = 2 * 1000 * 1000 * 1000;

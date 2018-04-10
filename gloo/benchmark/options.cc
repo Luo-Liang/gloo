@@ -155,6 +155,7 @@ struct options parseOptions(int argc, char** argv) {
       {"base", required_argument, nullptr, 0x1011},
       {"shared-path", required_argument, nullptr, 0x1012 },
       {"plink-schedule-file", required_argument, nullptr, 0x1013},
+      {"gdb", no_argument, nullptr, 0x1014},
       {"help", no_argument, nullptr, 0xffff},
       {nullptr, 0, nullptr, 0}};
 
@@ -292,6 +293,11 @@ struct options parseOptions(int argc, char** argv) {
 		  result.plinkScheduleFile = std::string(optarg, strlen(optarg));
 		  break;
 	  }
+    case 0x1014:
+    {
+      result.gdb = true;
+      break;
+    }
       case 0xffff: // --help
       {
         usage(EXIT_SUCCESS, argv[0]);
