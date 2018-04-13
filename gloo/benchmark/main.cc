@@ -173,7 +173,7 @@ namespace {
                     std::vector<int> participants = obj["participants"];
                     std::string algorithm = obj["algorithm"];
                     std::string groupId = obj["groupId"];
-                    int RootId = -1;
+                    int RootId = 0;
                     if (obj.find("rootId") != obj.end())
                     {
                         RootId = obj["rootId"];
@@ -411,6 +411,7 @@ int main(int argc, char** argv) {
         while (rem-- > 0)
         {
             printf("[%d] is waiting for GDB attach %ds remaining.\n", x.contextRank, x.gdb);
+	    sleep(1);
         }
     }
     if (x.benchmark == "pairwise_exchange") {
