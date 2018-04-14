@@ -212,7 +212,8 @@ namespace {
                             algo = std::make_shared<AllreduceBcube<T>>(pCtx, ptrs, elements);
                         }
                         else if (algorithm == "broadcast_one_to_all") {
-                            algo = std::make_shared<BroadcastOneToAll<T>>(pCtx, ptrs, elements, RootId); //rootRank is explicitly specified.
+                            int rootRnk = std::find(participants.begin(), participants.end(), RootId) - participants.begin();
+                            algo = std::make_shared<BroadcastOneToAll<T>>(pCtx, ptrs, elements, rootRnk); //rootRank is explicitly specified.
                         }
                         else if (algorithm == "phub_reduce")
                         {
