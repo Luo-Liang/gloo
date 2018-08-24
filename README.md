@@ -27,14 +27,12 @@ optional dependencies below.
 Optional dependencies are:
 * [CUDA][cuda] and [NCCL][nccl] -- for CUDA aware algorithms, tests, and benchmark
 * [Google Test][gtest] -- to build and run tests
-* [Eigen][eigen] -- for fast floating point routines
 * [Hiredis][hiredis] -- for coordinating machine rendezvous through Redis
 * [MPI][mpi] -- for coordinating machine rendezvous through MPI
 
 [cuda]: http://www.nvidia.com/object/cuda_home_new.html
 [nccl]: https://github.com/nvidia/nccl
 [gtest]: https://github.com/google/googletest
-[eigen]: http://eigen.tuxfamily.org
 [hiredis]: https://github.com/redis/hiredis
 [mpi]: https://www.open-mpi.org/
 
@@ -49,33 +47,49 @@ You can build Gloo using CMake.
 Since it is a library, it is most convenient to vendor it in your own
 project and include the project root in your own CMake configuration.
 
-For standalone builds (e.g. to run tests or benchmarks), first check
-out the submodules in `third-party` by running:
+### Test
 
-```shell
-git submodule update --init
+Building the tests requires Google Test version 1.8 or higher. On
+Ubuntu, this version ships with version 17.10 and up. If you run an
+older version, you'll have to install Google Test yourself, and set
+the `GTEST_ROOT` CMake variable.
+
+To build the tests, run:
+
+``` shell
+mkdir -p build
+cd build
+cmake ../ -DBUILD_TEST=1 -DGTEST_ROOT=/some/path (if using custom install)
+make
+ls -l gloo/test/gloo_test*
 ```
 
-Also install the dependencies required by the benchmark tool. On
+To test the CUDA algorithms, specify `USE_CUDA=ON` as well, and the
+CUDA tests are built at `gloo/test/gloo_test_cuda`.
+
+### Benchmark
+
+
+First install the dependencies required by the benchmark tool. On
 Ubuntu, you can do so by running:
 
 ``` shell
-sudo apt-get install -y libhiredis-dev libeigen3-dev
+sudo apt-get install -y libhiredis-dev
 ```
 
-Then, to build:
+Then build the benchmark, run:
 
 ``` shell
 mkdir build
 cd build
-cmake ../ -DBUILD_TEST=1 -DBUILD_BENCHMARK=1
-ls -l gloo/{test,benchmark}/{test,benchmark}
+cmake ../ -DBUILD_BENCHMARK=1
+ls -l gloo/benchmark/benchmark
 ```
 
 ## Benchmarking
 
-The benchmark tool depends on 1) Eigen for floating point math and 2)
-Redis/Hiredis for rendezvous. The benchmark tool for CUDA algorithms
+The benchmark tool depends on Redis/Hiredis for rendezvous.
+The benchmark tool for CUDA algorithms
 obviously also depends on both CUDA and NCCL.
 
 To run a benchmark:

@@ -4,9 +4,19 @@ set -e
 
 sudo apt-get update
 sudo apt-get install -y \
-    libeigen3-dev \
     libhiredis-dev \
     libibverbs-dev
+
+# Install Google Test
+tag=release-1.8.0
+pushd /tmp
+curl -Ls "https://github.com/google/googletest/archive/${tag}.tar.gz" | tar -zxvf -
+cd "googletest-${tag}"
+mkdir -p build
+cd build
+cmake ../ -DCMAKE_INSTALL_PREFIX=/tmp/googletest
+make install
+popd
 
 if [[ "${BUILD_CUDA}" == 'ON' ]]; then
   ################
