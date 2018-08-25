@@ -4,6 +4,13 @@ set(gloo_cuda_DEPENDENCY_LIBS "")
 # Configure path to modules (for find_package)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/Modules/")
 
+include_directories(/home/ubuntu/softiwarp-user-for-linux-rdma/build/include)
+include_directories(/home/ubuntu/gloo/third-party/PHub/include)
+list(APPEND gloo_DEPENDENCY_LIBS /home/ubuntu/gloo/third-party/PHub/lib/libPHub.a)
+list(APPEND gloo_DEPENDENCY_LIBS -lnuma)
+list(APPEND gloo_DEPENDENCY_LIBS -lhwloc)
+
+
 if(USE_REDIS)
   find_package(hiredis REQUIRED)
   if(HIREDIS_FOUND)

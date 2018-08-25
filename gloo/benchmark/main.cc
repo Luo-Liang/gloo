@@ -16,6 +16,7 @@
 #include "gloo/allreduce_bcube.h"
 #include "gloo/allreduce_ring.h"
 #include "gloo/allreduce_ring_chunked.h"
+#include "gloo/allreduce_phub.h"
 #include "gloo/PHubReduce.h"
 #include "gloo/barrier_all_to_all.h"
 #include "gloo/barrier_all_to_one.h"
@@ -419,6 +420,13 @@ class ReduceScatterBenchmark : public Benchmark<T>
         fn = [&](std::shared_ptr<Context> &context) {                            \
             return gloo::make_unique<                                            \
                 AllreduceBenchmark<AllreduceBcube<T>, T>>(context, x);           \
+        };                                                                       \
+    }                                                                            \
+    else if (x.benchmark == "allreduce_phub")                                    \
+    {                                                                            \
+        fn = [&](std::shared_ptr<Context> &context) {                            \
+            return gloo::make_unique<                                            \
+                AllreduceBenchmark<AllReducePHub<T>,T>>(context, x);             \
         };                                                                       \
     }                                                                            \
     else if (x.benchmark == "barrier_all_to_all")                                \

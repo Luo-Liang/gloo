@@ -11,17 +11,17 @@
 
 namespace gloo
 {
-std::string pHubGetMandatoryEnvironmemtVariable(std::string &name)
-{
-    var val = pHubGetOptionalEnvironmentVariable(name);
-    CHECK(val != "") << name << " is not set in environment variable";
-    return val;
-}
-
-std::string pHubGetOptionalEnvironmentVariable(std::string &name)
+std::string pHubGetOptionalEnvironmentVariable(std::string name)
 {
     var val = std::getenv(name.c_str());
     var ret = val == NULL ? std::string("") : std::string(val);
+    return ret;
+}
+
+std::string pHubGetMandatoryEnvironmemtVariable(std::string name)
+{
+    var val = pHubGetOptionalEnvironmentVariable(name);
+    CHECK(val != "") << name << " is not set in environment variable";
     return val;
 }
 
@@ -32,36 +32,40 @@ class AllReducePHub : public Algorithm
     std::shared_ptr<PHub> pHub;
     std::vector<T *> ptrs_;
     int dataElementCount;
+    const ReductionFunction<T> *fn_;
 
   public:
     AllReducePHub(
         const std::shared_ptr<::gloo::Context> &context,
         const std::vector<T *> ptrs,
         const int count,
-        const ReductionFunction<T> *fn = ReductionFunction<T>::sum) : Algorithm(context), dataElementCount(count), ptrs_(ptrs)
+        const ReductionFunction<T> *fn = ReductionFunction<T>::sum) : Algorithm(context),
+                                                                      dataElementCount(count),
+                                                                      ptrs_(ptrs),
+                                                                      fn_(fn)
     {
         //context is not used.
         //this is because PHub uses a separate way of performing rendezvous.
         //but size and rank is still used.
         if (context->size == 1)
             return;
-        var redisHost = pHubGetEnvironmemtVariable("PHubRedisHost");
+        var redisHost = pHubGetMandatoryEnvironmemtVariable("PHubRedisHost");
         std::string redisIp;
-        ushort redisPort;
+        uint redisPort;
         ParseHostPort(redisHost, redisIp, redisPort);
         //PHub requests a node IP map. Gloo does this automatically,
         //so we need to use PhubRendezvous to retrieve one.
-        std::vector<NodeIp> participants;
+        std::vector<NodeId> PHubNodes;
         for (int i = 0; i < context->size; i++)
         {
-            participants.push_back((NodeId)i);
+            PHubNodes.push_back((NodeId)i);
         }
         PHubRendezvous rendezvous(redisIp, redisPort, context->rank);
         std::string myIp = trim(PHubExecute("hostname -i"));
-        var nodeMap = rendezvous->PullNodeMap(participants, myIp);
+        var nodeMap = rendezvous.PullNodeMap(PHubNodes, myIp);
         //remember to chunk my keys
 
-        var chunkSize = atoi(pHubGetEnvironmemtVariable("PHubChunkElementSize").c_str());
+        var chunkSize = atoi(pHubGetMandatoryEnvironmemtVariable("PHubChunkElementSize").c_str());
 
         int keyCount = (int)ceil(count * 1.0 / chunkSize);
         int chunksSizeInBytes = chunkSize * sizeof(T);
@@ -75,7 +79,7 @@ class AllReducePHub : public Algorithm
         T *currPtr = ptr;
         for (PLinkKey key = 0; key < keyCount; key++)
         {
-            int sizeInBytes = (key == keyCount - 1) && remainderInBytes ? chunksSizeInBytes;
+            int sizeInBytes = (key == keyCount - 1) && remainderInBytes != 0 ? remainderInBytes : chunksSizeInBytes;
             int elementCount = sizeInBytes / sizeof(T);
             keySizes.push_back(sizeInBytes);
             appAddrs.push_back(currPtr);
@@ -139,25 +143,22 @@ class AllReducePHub : public Algorithm
         preference.UseiWarp = pHubGetOptionalEnvironmentVariable("PHubUseiWarp") != "";
 
 #pragma endregion
-        pHub = std::make_shared<PHub>(redisHost, nodeMap, keySizes, appAddrs, participants.size(), sizeof(T), context->rank, preference);
+        //PHub pub(redisHost, nodeMap, keySizes, appAddrs, (int)PHubNodes.size(), sizeof(T), context->rank, preference);
+        pHub = std::make_shared<PHub>(redisHost, nodeMap, keySizes, appAddrs, (int)PHubNodes.size(), sizeof(T), context->rank, preference);
     }
 
     void run()
     {
-        size_t bufferOffset = 0;
-        size_t numItems =
-            stepsWithinBlock_ > 0 ? chunkSize_ << (steps_ - 1) : count_;
-
         for (int i = 1; i < ptrs_.size(); i++)
         {
-            fn_->call(ptrs_[0], ptrs_[i], count_);
+            fn_->call(ptrs_[0], ptrs_[i], dataElementCount);
         }
         if (this->contextSize_ == 1)
         {
             // Broadcast ptrs_[0]
             for (int i = 1; i < ptrs_.size(); i++)
             {
-                memcpy(ptrs_[i], ptrs_[0], bytes_);
+                memcpy(ptrs_[i], ptrs_[0], sizeof(T) * dataElementCount);
             }
             return;
         }
