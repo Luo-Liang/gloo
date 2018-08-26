@@ -61,6 +61,7 @@ class AllReducePHub : public Algorithm
             PHubNodes.push_back((NodeId)i);
         }
         PHubRendezvous rendezvous(redisIp, redisPort, context->rank);
+        rendezvous.Connect();
         std::string myIp = trim(PHubExecute("hostname -i"));
         var nodeMap = rendezvous.PullNodeMap(PHubNodes, myIp);
         //remember to chunk my keys
@@ -73,6 +74,7 @@ class AllReducePHub : public Algorithm
         CHECK(sizeof(T) == 4) << "Currently PHub only supports 4 Byte floats";
         std::vector<float> keySizes;
         std::vector<void *> appAddrs;
+        std::vector<PLinkKey> keys;
         T *ptr = ptrs.at(0);
 
         //now initialize keySizes.
@@ -83,6 +85,7 @@ class AllReducePHub : public Algorithm
             int elementCount = sizeInBytes / sizeof(T);
             keySizes.push_back(sizeInBytes);
             appAddrs.push_back(currPtr);
+            keys.push_back(key);
             currPtr += elementCount;
         }
         CHECK(currPtr == ptr + count) << "There is a problem assigning appAddr for PHub";
@@ -140,11 +143,16 @@ class AllReducePHub : public Algorithm
         {
             preference.TransmitTimeout = atoi(pHubGetOptionalEnvironmentVariable("PHubTransmitTimeout").c_str());
         }
-        preference.UseiWarp = pHubGetOptionalEnvironmentVariable("PHubUseiWarp") != "";
+        preference.UseiWarp = pHubGetOptionalEnvironmentVariable("PHubUseiWarp") != "False";
 
 #pragma endregion
         //PHub pub(redisHost, nodeMap, keySizes, appAddrs, (int)PHubNodes.size(), sizeof(T), context->rank, preference);
         pHub = std::make_shared<PHub>(redisHost, nodeMap, keySizes, appAddrs, (int)PHubNodes.size(), sizeof(T), context->rank, preference);
+        pHub->Initialize();
+        //PHubSchedule(std::string scheduleFile, NodeId myId, std::vector<PLinkKey> & keys);
+        var scheduleFile = pHubGetMandatoryEnvironmemtVariable("PHubScheduleFile");
+        auto pSchedule = std::make_shared<PHubSchedule>(scheduleFile, context->rank, keys);
+        pHub->InitializePHubThreading(pSchedule);
     }
 
     void run()

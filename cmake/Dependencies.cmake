@@ -9,7 +9,7 @@ include_directories(/home/ubuntu/gloo/third-party/PHub/include)
 list(APPEND gloo_DEPENDENCY_LIBS /home/ubuntu/gloo/third-party/PHub/lib/libPHub.a)
 list(APPEND gloo_DEPENDENCY_LIBS -lnuma)
 list(APPEND gloo_DEPENDENCY_LIBS -lhwloc)
-
+list(APPEND gloo_DEPENDENCY_LIBS -lrdmacm)
 
 if(USE_REDIS)
   find_package(hiredis REQUIRED)
