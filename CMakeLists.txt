@@ -61,7 +61,7 @@ include_directories(${PROJECT_BINARY_DIR})
 include_directories(/home/ubuntu/softiwarp-user-for-linux-rdma/build/include)
 
 # Compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC -g -O0")
 
 # Recurse into main project directory
 add_subdirectory(gloo)
