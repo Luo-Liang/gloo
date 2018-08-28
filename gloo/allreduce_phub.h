@@ -11,14 +11,14 @@
 
 namespace gloo
 {
-std::string pHubGetOptionalEnvironmentVariable(std::string name)
+static inline std::string pHubGetOptionalEnvironmentVariable(std::string name)
 {
     var val = std::getenv(name.c_str());
     var ret = val == NULL ? std::string("") : std::string(val);
     return ret;
 }
 
-std::string pHubGetMandatoryEnvironmemtVariable(std::string name)
+static inline std::string pHubGetMandatoryEnvironmemtVariable(std::string name)
 {
     var val = pHubGetOptionalEnvironmentVariable(name);
     CHECK(val != "") << name << " is not set in environment variable";
