@@ -7,7 +7,7 @@
 #include "gloo/algorithm.h"
 #include "gloo/common/error.h"
 #include "gloo/context.h"
-#include <PHub.h>
+#include <PHub/PHub.h>
 
 namespace gloo
 {

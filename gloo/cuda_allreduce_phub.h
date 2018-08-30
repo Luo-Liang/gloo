@@ -11,7 +11,7 @@
 #include "gloo/cuda.h"
 #include "gloo/cuda_workspace.h"
 
-#include <PHub.h>
+#include <PHub/PHub.h>
 
 namespace gloo {
 
