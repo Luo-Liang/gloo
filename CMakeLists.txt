@@ -26,7 +26,7 @@ option(BUILD_BENCHMARK "Build benchmark binary (requires hiredis)" OFF)
 
 # Option defaults (so they can be overwritten before declaring the option)
 set(USE_REDIS_DEFAULT ON)
-set(USE_IBVERBS_DEFAULT OFF)
+set(USE_IBVERBS_DEFAULT ON)
 set(USE_NCCL_DEFAULT OFF)
 
 # Options

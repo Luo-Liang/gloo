@@ -26,7 +26,7 @@ static_assert(
 
 #define GLOO_USE_CUDA 1
 #define GLOO_USE_NCCL 1
-#define GLOO_USE_REDIS 0
+#define GLOO_USE_REDIS 1
 #define GLOO_USE_IBVERBS 0
 #define GLOO_USE_MPI 1
 #define GLOO_USE_AVX 0
