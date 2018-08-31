@@ -6,10 +6,16 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/Modules/
 
 #include_directories(/home/ubuntu/softiwarp-user-for-linux-rdma/build/include)
 #include_directories(/home/ubuntu/gloo/third-party/PHub/include)
+#list(APPEND gloo_DEPENDENCY_LIBS -lnuma)
+#list(APPEND gloo_DEPENDENCY_LIBS -lhwloc)
+#list(APPEND gloo_DEPENDENCY_LIBS -lrdmacm)
 list(APPEND gloo_DEPENDENCY_LIBS -lPHub)
-list(APPEND gloo_DEPENDENCY_LIBS -lnuma)
-list(APPEND gloo_DEPENDENCY_LIBS -lhwloc)
-list(APPEND gloo_DEPENDENCY_LIBS -lrdmacm)
+
+#list(APPEND gloo_cuda_DEPENDENCY_LIBS -lnuma)
+#list(APPEND gloo_cuda_DEPENDENCY_LIBS -lhwloc)
+#list(APPEND gloo_cuda_DEPENDENCY_LIBS -lrdmacm)
+list(APPEND gloo_cuda_DEPENDENCY_LIBS -lPHub)
+
 
 if(USE_REDIS)
   find_package(hiredis REQUIRED)

@@ -84,6 +84,7 @@ std::shared_ptr<PHub> createPHubInstance(T *ptr, int count, int size, int rank)
     CHECK(currPtr == ptr + count) << "There is a problem assigning appAddr for PHub";
 
     PHubLaunchPreference preference;
+    preference.RendezvousPrefix = "PLINK";
 #pragma region
     preference.BlockedInterfaces = pHubGetOptionalEnvironmentVariable("PHubBlockedInterfaces");
     if (pHubGetOptionalEnvironmentVariable("PHubCoreOffset") != "")
@@ -146,6 +147,7 @@ std::shared_ptr<PHub> createPHubInstance(T *ptr, int count, int size, int rank)
     var scheduleFile = getUpdatedSchedule(keySizes.size());
     auto pSchedule = std::make_shared<PHubSchedule>(scheduleFile, rank, keys);
     pHub->InitializePHubThreading(pSchedule);
+    printf("initializing PHub at addr = %p. count = %d. chunked key counts = %d\n", ptr, count, keySizes.size());
     return pHub;
 }
 
@@ -174,6 +176,7 @@ class AllReducePHub : public Algorithm
         if (context->size == 1)
             return;
         pHub = createPHubInstance(ptrs_.at(0), count, context->size, context->rank);
+        printf("[%d] PHub initialized at %p\n", context->rank, this);
     }
 
     virtual void run()
