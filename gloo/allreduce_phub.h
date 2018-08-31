@@ -25,6 +25,22 @@ static inline std::string pHubGetMandatoryEnvironmemtVariable(std::string name)
     return val;
 }
 
+static inline std::string getUpdatedSchedule(int keyCount)
+{
+    // python cluster.py --data output.txt.proced.csv --key-count 5
+    //1_clusters.json
+    var pyFolder = pHubGetMandatoryEnvironmemtVariable("PLinkClusterPy");
+    var clusterCount = pHubGetMandatoryEnvironmemtVariable("PHubScheduleFile");
+    std::string cmd;
+    cmd += "cd " + pyFolder + ";";
+    cmd += "python cluster.py --data output.txt.proced.csv --key-count " + std::to_string(keyCount);
+    cmd += " --similarity-matrix False" + std::to_string(keyCount);
+    PHubExecute(cmd.c_str());
+    var target = pyFolder + "/" + clusterCount + "_cluster.jsons";
+    printf("found target %s\n", target.c_str());
+    return target;
+}
+
 template <typename T>
 std::shared_ptr<PHub> createPHubInstance(T *ptr, int count, int size, int rank)
 {
@@ -127,7 +143,7 @@ std::shared_ptr<PHub> createPHubInstance(T *ptr, int count, int size, int rank)
     var pHub = std::make_shared<PHub>(redisHost, nodeMap, keySizes, appAddrs, (int)PHubNodes.size(), sizeof(T), rank, preference);
     pHub->Initialize();
     //PHubSchedule(std::string scheduleFile, NodeId myId, std::vector<PLinkKey> & keys);
-    var scheduleFile = pHubGetMandatoryEnvironmemtVariable("PHubScheduleFile");
+    var scheduleFile = getUpdatedSchedule(keySizes.size());
     auto pSchedule = std::make_shared<PHubSchedule>(scheduleFile, rank, keys);
     pHub->InitializePHubThreading(pSchedule);
     return pHub;
