@@ -25,8 +25,8 @@ option(BUILD_TEST "Build test binary (requires gtest)" OFF)
 option(BUILD_BENCHMARK "Build benchmark binary (requires hiredis)" OFF)
 
 # Option defaults (so they can be overwritten before declaring the option)
-set(USE_REDIS_DEFAULT ON)
-set(USE_IBVERBS_DEFAULT ON)
+set(USE_REDIS_DEFAULT OFF)
+set(USE_IBVERBS_DEFAULT OFF)
 set(USE_NCCL_DEFAULT OFF)
 
 # Options
@@ -58,14 +58,11 @@ include(cmake/Dependencies.cmake)
 # Use project root as default include directory
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
-#include_directories(/home/ubuntu/softiwarp-user-for-linux-rdma/build/include)
-#include_directories(/home/ubuntu/PHub/include)
 
 # Compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC -g -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC")
 
 # Recurse into main project directory
-# rebuild PHub
 add_subdirectory(gloo)
 
 # Finally, create the cmake configuration files.
