@@ -178,7 +178,11 @@ void runBenchmark(options& x) {
     } else if (x.benchmark == "cuda_allreduce_ring_chunked") {
       builder.setImplementation(
         gloo::AllreduceBuilder<T>::RingChunked);
-    } else {
+    } else if (x.benchmark == "cuda_allreduce_phub") {
+      builder.setImplementation(
+	gloo::AllreduceBuilder<T>::PHubDynamic);
+    }
+    else {
       GLOO_ENFORCE(false, "Invalid algorithm: ", x.benchmark);
     }
     fn = [&, builder](std::shared_ptr<Context>& context) {
