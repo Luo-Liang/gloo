@@ -10,6 +10,9 @@ set(GLOO_BENCHMARK_SRCS
   )
 
 add_executable(benchmark ${GLOO_BENCHMARK_SRCS})
+target_link_libraries(benchmark hiredis)
+target_link_libraries(benchmark pthread)
+target_link_libraries(benchmark PHub)
 target_link_libraries(benchmark gloo)
 
 if(GLOO_INSTALL)

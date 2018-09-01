@@ -79,3 +79,5 @@ if(BUILD_TEST)
     target_link_libraries(gtest INTERFACE ${GTEST_LIBRARIES})
   endif()
 endif()
+
+list(APPEND gloo_DEPENDENCY_LIBS -Wl,--no-as-needed PHub)
