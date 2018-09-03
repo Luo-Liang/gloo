@@ -90,6 +90,14 @@ class AllreduceBenchmark : public Benchmark<T>
     virtual void initialize(size_t elements) override
     {
         auto ptrs = this->allocate(this->options_.inputs, elements);
+	for (const auto &input : this->inputs_)
+        {
+            for (int i = 0; i < input.size(); i++)
+            {
+                fprintf(stderr, "[%d]:input[%d] = %f\n", this->context_->rank, i, ptrs[i]);
+            }
+            printf("\n");
+        }
         this->algorithm_.reset(new A(this->context_, ptrs, elements));
     }
 
