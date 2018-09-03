@@ -43,7 +43,7 @@ static inline std::string getUpdatedSchedule(int keyCount)
     PHubExecute(cmd.c_str());
     var target = pyFolder + "/" + clusterCount + "_clusters.json";
     //check that this file exists.
-    ifstream f(cmd.c_str());
+    ifstream f(target.c_str());
     CHECK(f.good()) << "target " << target << " is not found. check this file is generated correctly. cmd = " << cmd;
     //fprintf(stderr, "found target schedule file at %s\n", target.c_str());
     return target;
