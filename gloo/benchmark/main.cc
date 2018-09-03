@@ -90,6 +90,14 @@ class AllreduceBenchmark : public Benchmark<T>
     virtual void initialize(size_t elements) override
     {
         auto ptrs = this->allocate(this->options_.inputs, elements);
+        for (const auto &input : this->inputs_)
+        {
+            for (int i = 0; i < input.size(); i++)
+            {
+                fprintf(stderr, "[%d]:input(%p)[%d] = %f. element size = %d\n", this->context_->rank, &input[i] ,i, ptrs[i], sizeof(T));
+            }
+            printf("\n");
+        }
         this->algorithm_.reset(new A(this->context_, ptrs, elements));
     }
 
@@ -260,7 +268,6 @@ class PLinkScheduleBenchmark : public Benchmark<T>
     }
 };
 
-
 template <typename T>
 class BarrierAllToAllBenchmark : public Benchmark<T>
 {
@@ -426,7 +433,7 @@ class ReduceScatterBenchmark : public Benchmark<T>
     {                                                                            \
         fn = [&](std::shared_ptr<Context> &context) {                            \
             return gloo::make_unique<                                            \
-                AllreduceBenchmark<AllReducePHub<T>,T>>(context, x);             \
+                AllreduceBenchmark<AllReducePHub<T>, T>>(context, x);            \
         };                                                                       \
     }                                                                            \
     else if (x.benchmark == "barrier_all_to_all")                                \
