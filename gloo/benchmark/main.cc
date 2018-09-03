@@ -90,11 +90,11 @@ class AllreduceBenchmark : public Benchmark<T>
     virtual void initialize(size_t elements) override
     {
         auto ptrs = this->allocate(this->options_.inputs, elements);
-        for (const auto &input : this->inputs_)
+        for (const auto &ptr : ptrs)
         {
-            for (int i = 0; i < ptrs.size(); i++)
+            for (int i = 0; i < ptr.size(); i++)
             {
-                fprintf(stderr, "[%d]:input(%p)[%d] = %f. element size = %d\n", this->context_->rank, &ptrs[i] ,i, ptrs[i], sizeof(ptrs[i]));
+                fprintf(stderr, "[%d]:input(%p)[%d] = %f. element size = %d\n", this->context_->rank, &ptr[i] ,i, ptr[i], sizeof(ptr[i]));
             }
             printf("\n");
         }
