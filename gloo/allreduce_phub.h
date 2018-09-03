@@ -33,7 +33,7 @@ static inline std::string getUpdatedSchedule(int keyCount)
     //clean up
     std::string cleanUpCmd;
     cleanUpCmd += "cd " + pyFolder + "; rm *.json";
-    PHubExecute(cleanUpCmd);
+    PHubExecute(cleanUpCmd.c_str());
 
     var clusterCount = pHubGetMandatoryEnvironmemtVariable("PHubScheduleFile");
     std::string cmd;
@@ -155,7 +155,7 @@ std::shared_ptr<PHub> createPHubInstance(T *ptr, int count, int size, int rank)
     var scheduleFile = getUpdatedSchedule(keySizes.size());
     auto pSchedule = std::make_shared<PHubSchedule>(scheduleFile, rank, keys);
     pHub->InitializePHubThreading(pSchedule);
-    printf("initializing PHub at addr = %p. count = %d. chunked key counts = %d\n", ptr, count, keySizes.size());
+    printf("initializing PHub at addr = %p. count = %d. chunked key counts = %d\n", ptr, count, (int)keySizes.size());
     return pHub;
 }
 
