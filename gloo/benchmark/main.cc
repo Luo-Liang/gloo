@@ -92,7 +92,7 @@ class AllreduceBenchmark : public Benchmark<T>
         auto ptrs = this->allocate(this->options_.inputs, elements);
         for (const auto &ptr : ptrs)
         {
-            for (int i = 0; i < ptr.size(); i++)
+            for (size_t i = 0; i < elements; i++)
             {
                 fprintf(stderr, "[%d]:input(%p)[%d] = %f. element size = %d\n", this->context_->rank, &ptr[i] ,i, ptr[i], sizeof(ptr[i]));
             }
