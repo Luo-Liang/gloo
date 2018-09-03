@@ -41,10 +41,10 @@ static inline std::string getUpdatedSchedule(int keyCount)
     cmd += "python cluster.py --data output.txt.proced.csv --key-count " + std::to_string(keyCount);
     cmd += " --similarity-matrix False" + std::to_string(keyCount);
     PHubExecute(cmd.c_str());
-    var target = pyFolder + "/" + clusterCount + "_cluster.json";
+    var target = pyFolder + "/" + clusterCount + "_clusters.json";
     //check that this file exists.
     ifstream f(cmd.c_str());
-    CHECK(f.good()) << "target " << cmd << " is not found. check this file is generated correctly. cmd = " << target;
+    CHECK(f.good()) << "target " << target << " is not found. check this file is generated correctly. cmd = " << cmd;
     //fprintf(stderr, "found target schedule file at %s\n", target.c_str());
     return target;
 }
