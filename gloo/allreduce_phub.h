@@ -32,7 +32,7 @@ static inline std::string getUpdatedSchedule(int keyCount)
     var pyFolder = pHubGetMandatoryEnvironmemtVariable("PLinkClusterPy");
     //clean up
     std::string cleanUpCmd;
-    cleanUpCmd += "cd " + pyFolder + "; rm *.json";
+    cleanUpCmd += "cd " + pyFolder + "; sudo rm *.json";
     PHubExecute(cleanUpCmd.c_str());
 
     var clusterCount = pHubGetMandatoryEnvironmemtVariable("PHubScheduleFile");
