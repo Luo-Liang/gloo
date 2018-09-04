@@ -145,6 +145,7 @@ std::shared_ptr<PHub> createPHubInstance(T *ptr, int count, int size, int rank)
     {
         preference.TransmitTimeout = atoi(pHubGetOptionalEnvironmentVariable("PHubTransmitTimeout").c_str());
     }
+    preference.DebugMode = pHubGetOptionalEnvironmentVariable("PHubDebugMode") != "False";
     preference.UseiWarp = pHubGetOptionalEnvironmentVariable("PHubUseiWarp") != "False";
 
 #pragma endregion
