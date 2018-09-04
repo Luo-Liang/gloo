@@ -95,7 +95,7 @@ class AllreduceBenchmark : public Benchmark<T>
             for (size_t i = 0; i < elements; i++)
             {
                 fprintf(stderr, "[%d]:input(%p)[%d] = %f. element size = %d. Setting to 0xDEADBEEF\n", this->context_->rank, &ptr[i] ,i, ptr[i], sizeof(ptr[i]));
-                ptr[i] = -6259853398707798000f;
+                ptr[i] = -6259853398707798000.0f;
             }
             printf("\n");
         }
