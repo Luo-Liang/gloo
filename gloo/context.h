@@ -14,11 +14,14 @@
 
 #include "gloo/transport/device.h"
 #include "gloo/transport/pair.h"
+#include <atomic>
 
-namespace gloo {
+namespace gloo
+{
 
-class Context {
- public:
+class Context
+{
+public:
   Context(int rank, int size, int base = 2);
   virtual ~Context();
 
@@ -26,11 +29,16 @@ class Context {
   const int size;
   int base;
 
-  std::shared_ptr<transport::Device>& getDevice();
+  std::shared_ptr<transport::Device> &getDevice();
 
-  std::unique_ptr<transport::Pair>& getPair(int i);
+  std::unique_ptr<transport::Pair> &getPair(int i);
 
   int nextSlot(int numToSkip = 1);
+
+  int getCID()
+  {
+    return ContextID;
+  }
 
   void closeConnections();
 
@@ -38,12 +46,13 @@ class Context {
 
   std::chrono::milliseconds getTimeout() const;
 
- protected:
+protected:
+  static std::atomic<int> CIDTicketer;
+  int ContextID;
   std::shared_ptr<transport::Device> device_;
   std::vector<std::unique_ptr<transport::Pair>> pairs_;
   int slot_;
   std::chrono::milliseconds timeout_;
-
 };
 
 } // namespace gloo

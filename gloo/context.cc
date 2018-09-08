@@ -12,57 +12,71 @@
 #include "gloo/common/error.h"
 #include "gloo/common/logging.h"
 
-namespace gloo {
+namespace gloo
+{
 
-static const std::chrono::seconds kTimeoutDefault =  std::chrono::seconds(600);
+static const std::chrono::seconds kTimeoutDefault = std::chrono::seconds(600);
+std::atomic<int> Context::CIDTicketer;
 
 Context::Context(int rank, int size, int base)
     : rank(rank),
       size(size),
       base(base),
       slot_(0),
-      timeout_(kTimeoutDefault) {
+      timeout_(kTimeoutDefault)
+{
   GLOO_ENFORCE_GE(rank, 0);
   GLOO_ENFORCE_LT(rank, size);
   GLOO_ENFORCE_GE(size, 1);
+  ContextID = CIDTicketer.fetch_add(1);
 }
 
-Context::~Context() {
+Context::~Context()
+{
 }
 
-std::shared_ptr<transport::Device>& Context::getDevice() {
+std::shared_ptr<transport::Device> &Context::getDevice()
+{
   GLOO_ENFORCE(device_, "Device not set!");
   return device_;
 }
 
-std::unique_ptr<transport::Pair>& Context::getPair(int i) {
+std::unique_ptr<transport::Pair> &Context::getPair(int i)
+{
   return pairs_.at(i);
 }
 
-int Context::nextSlot(int numToSkip) {
+int Context::nextSlot(int numToSkip)
+{
   GLOO_ENFORCE_GT(numToSkip, 0);
   auto temp = slot_;
   slot_ += numToSkip;
   return temp;
 }
 
-void Context::closeConnections() {
-  for (auto& pair : pairs_) {
-    if (pair) {
+void Context::closeConnections()
+{
+  for (auto &pair : pairs_)
+  {
+    if (pair)
+    {
       pair->close();
     }
   }
 }
 
-void Context::setTimeout(std::chrono::milliseconds timeout) {
-  if (timeout < std::chrono::milliseconds::zero()) {
+void Context::setTimeout(std::chrono::milliseconds timeout)
+{
+  if (timeout < std::chrono::milliseconds::zero())
+  {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("Invalid timeout", timeout.count());
   }
 
   timeout_ = timeout;
 }
 
-std::chrono::milliseconds Context::getTimeout() const {
+std::chrono::milliseconds Context::getTimeout() const
+{
   return timeout_;
 }
 
