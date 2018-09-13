@@ -50,8 +50,9 @@ CudaAllreducePHub<T, W>::CudaAllreducePHub(
     return;
   }
   T *ptr = *inbox_;
-  fprintf(stderr, "initializing PHub with context[%d](%p). .size=%d .rank=%d .ptr=%p, .count=%d\n", context->getCID(), context.get(), context->size, context->rank, ptr, count);
-  pHub = createPHubInstance(ptr, count, context->size, context->rank, ::gloo::Context::getCID());
+  int cid = ::gloo::Context::getCID();
+  fprintf(stderr, "initializing PHub with context[%d](%p). .size=%d .rank=%d .ptr=%p, .count=%d\n", cid, context.get(), context->size, context->rank, ptr, count);
+  pHub = createPHubInstance(ptr, count, context->size, context->rank, cid);
 }
 // namespace gloo
 template <typename T, typename W>
