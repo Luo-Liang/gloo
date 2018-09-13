@@ -4,30 +4,37 @@
 #include "gloo/cuda_collectives_host.h"
 #include "gloo/cuda_private.h"
 
-namespace gloo {
+namespace gloo
+{
 
 template <typename T, typename W>
 CudaAllreducePHub<T, W>::CudaAllreducePHub(
-    const std::shared_ptr<Context>& context,
-    const std::vector<T*>& ptrs,
+    const std::shared_ptr<Context> &context,
+    const std::vector<T *> &ptrs,
     const int count,
-    const std::vector<cudaStream_t>& streams)
+    const std::vector<cudaStream_t> &streams)
     : Algorithm(context),
       count_(count),
       bytes_(count_ * sizeof(T)),
       synchronizeDeviceOutputs_(streams.size() == 0),
-      fn_(CudaReductionFunction<T>::sum) {
+      fn_(CudaReductionFunction<T>::sum)
+{
   auto newStream = true;
-  if (streams.size() > 0) {
+  if (streams.size() > 0)
+  {
     GLOO_ENFORCE_EQ(streams.size(), ptrs.size());
     newStream = false;
   }
 
-  for (auto i = 0; i < ptrs.size(); i++) {
+  for (auto i = 0; i < ptrs.size(); i++)
+  {
     auto ptr = CudaDevicePointer<T>::create(ptrs[i], count_);
-    if (newStream) {
+    if (newStream)
+    {
       streams_.push_back(CudaStream(ptr.getDeviceID()));
-    } else {
+    }
+    else
+    {
       streams_.push_back(CudaStream(ptr.getDeviceID(), streams[i]));
     }
     devicePtrs_.push_back(std::move(ptr));
@@ -38,24 +45,29 @@ CudaAllreducePHub<T, W>::CudaAllreducePHub(
 
   // inbox_ is ready.
 
-  if (this->context_->size == 1) {
+  if (this->context_->size == 1)
+  {
     return;
   }
-  T* ptr = *inbox_;
+  T *ptr = *inbox_;
+  fprintf(stderr, "initializing PHub with context[%d](%p). .size=%d .rank=%d\n", context->getCID(), context.get(), context->size, context->rank);
   pHub = createPHubInstance(ptr, count, context->size, context->rank, context->getCID());
 }
 // namespace gloo
 template <typename T, typename W>
-void CudaAllreducePHub<T, W>::run() {
+void CudaAllreducePHub<T, W>::run()
+{
   CudaDeviceGuard guard;
-  CudaStream& stream = *scratchStream_;
+  CudaStream &stream = *scratchStream_;
 
-  if (localReduceOp_) {
+  if (localReduceOp_)
+  {
     localReduceOp_->run();
   }
 
   // Initialize outbox with locally reduced values
-  if (this->context_->size != 1) {
+  if (this->context_->size != 1)
+  {
     stream.copyAsync(inbox_, scratch_);
     stream.wait();
     pHub->Reduce();
@@ -63,9 +75,11 @@ void CudaAllreducePHub<T, W>::run() {
     stream.wait();
   }
 
-  if (localBroadcastOp_) {
+  if (localBroadcastOp_)
+  {
     localBroadcastOp_->runAsync();
-    if (synchronizeDeviceOutputs_) {
+    if (synchronizeDeviceOutputs_)
+    {
       localBroadcastOp_->wait();
     }
   }
@@ -75,7 +89,8 @@ template <typename T, typename W>
 template <typename U>
 void CudaAllreducePHub<T, W>::init(typename std::enable_if<
                                    std::is_same<U, CudaHostWorkspace<T>>::value,
-                                   typename U::Pointer>::type*) {
+                                   typename U::Pointer>::type *)
+{
   // Since reduction is executed on the CPU, the scratch space
   // where they are accumulated is a new host side buffer.
   scratch_ = W::Pointer::alloc(count_);
@@ -97,7 +112,8 @@ template <typename U>
 void CudaAllreducePHub<T, W>::init(
     typename std::enable_if<
         std::is_same<U, CudaDeviceWorkspace<T>>::value,
-        typename U::Pointer>::type*) {
+        typename U::Pointer>::type *)
+{
   // The networking adapter does DMA to/from GPU memory, so we should reduce
   // onto the device that's closest to the networking adapter bound
   // to our context. This uses PCI distance to find closest GPU.
@@ -108,7 +124,8 @@ void CudaAllreducePHub<T, W>::init(
 
   // Run local reduction and broadcast on device.
   // When running with a device workspace we intend to never leave the device.
-  if (devicePtrs_.size() > 1) {
+  if (devicePtrs_.size() > 1)
+  {
     localReduceOp_ =
         cudaDeviceReduce(streams_, devicePtrs_, scratch_, fn_, 0, count_);
     localBroadcastOp_ =

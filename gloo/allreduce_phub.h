@@ -37,7 +37,7 @@ class AllReducePHub : public Algorithm
         if (context->size == 1)
             return;
         pHub = createPHubInstance(ptrs_.at(0), count, context->size, context->rank, context->getCID());
-        printf("[%d] PHub initialized at %p\n", context->rank, this);
+        //printf("[%d] PHub initialized at %p\n", context->rank, this);
     }
 
     virtual void run()
