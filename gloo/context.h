@@ -35,9 +35,9 @@ public:
 
   int nextSlot(int numToSkip = 1);
 
-  int getCID()
+  static int getCID()
   {
-    return ContextID;
+    return CIDTicketer.fetch_add(1, std::memory_order::memory_order_relaxed);
   }
 
   void closeConnections();
@@ -48,7 +48,6 @@ public:
 
 protected:
   static std::atomic<int> CIDTicketer;
-  int ContextID;
   std::shared_ptr<transport::Device> device_;
   std::vector<std::unique_ptr<transport::Pair>> pairs_;
   int slot_;

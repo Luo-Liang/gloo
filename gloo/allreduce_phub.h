@@ -36,7 +36,7 @@ class AllReducePHub : public Algorithm
         //but size and rank is still used.
         if (context->size == 1)
             return;
-        pHub = createPHubInstance(ptrs_.at(0), count, context->size, context->rank, context->getCID());
+        pHub = createPHubInstance(ptrs_.at(0), count, context->size, context->rank, ::gloo::Context::getCID());
         //printf("[%d] PHub initialized at %p\n", context->rank, this);
     }
 

@@ -28,7 +28,7 @@ Context::Context(int rank, int size, int base)
   GLOO_ENFORCE_GE(rank, 0);
   GLOO_ENFORCE_LT(rank, size);
   GLOO_ENFORCE_GE(size, 1);
-  ContextID = CIDTicketer.fetch_add(1);
+  //ContextID = CIDTicketer.fetch_add(1);
 }
 
 Context::~Context()
