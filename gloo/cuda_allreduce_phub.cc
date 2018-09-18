@@ -82,15 +82,7 @@ void CudaAllreducePHub<T, W>::run()
   {
     stream.copyAsync(inbox_, scratch_);
     stream.wait();
-    CHECK(pHub != NULL || UseStandAlonePHub == false);
-    if (UseStandAlonePHub == false)
-    {
-      getPHubInstance()->Reduce();
-    }
-    else
-    {
-      pHub->Reduce();
-    }
+    pHub->Reduce(reductionKeys);
     stream.copyAsync(scratch_, inbox_);
     stream.wait();
   }
