@@ -27,6 +27,7 @@ class CudaAllreducePHub : public Algorithm {
   virtual ~CudaAllreducePHub() = default;
 
   virtual void run() override;
+  bool UseStandAlonePHub;
 
  protected:
   // Both workspace types have their own initialization function.
@@ -56,6 +57,7 @@ class CudaAllreducePHub : public Algorithm {
   std::unique_ptr<LocalOp<T>> localBroadcastOp_;
 
   std::shared_ptr<PHub> pHub;
+  std::vector<PLinkKey> reductionKeys;
 
   typename W::Pointer inbox_;
 };

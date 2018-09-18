@@ -20,23 +20,41 @@ class AllReducePHub : public Algorithm
     std::vector<T *> ptrs_;
     int dataElementCount;
     const ReductionFunction<T> *fn_;
+    std::vector<PLinkKey> reductionKeys;
 
   public:
+    bool UseStandAlonePHub;
     AllReducePHub(
         const std::shared_ptr<::gloo::Context> &context,
         const std::vector<T *> ptrs,
         const int count,
-        const ReductionFunction<T> *fn = ReductionFunction<T>::sum) : Algorithm(context),
-                                                                      dataElementCount(count),
-                                                                      ptrs_(ptrs),
-                                                                      fn_(fn)
+        const ReductionFunction<T> *fn = ReductionFunction<T>::sum,
+        bool useStandAlonePHub = true) : Algorithm(context),
+                                         dataElementCount(count),
+                                         ptrs_(ptrs),
+                                         fn_(fn),
+                                         UseStandAlonePHub(useStandAlonePHub)
     {
         //context is not used.
         //this is because PHub uses a separate way of performing rendezvous.
         //but size and rank is still used.
         if (context->size == 1)
             return;
-        pHub = createPHubInstance(ptrs_.at(0), count, context->size, context->rank, ::gloo::Context::getCID());
+
+        std::string standAlone = pHubGetOptionalEnvironmentVariable("PHubStandAlone");
+        UseStandAlonePHub = standAlone != "False";
+        if (UseStandAlonePHub)
+        {
+            pHub = createPHubInstance(ptrs_.at(0), count, context->size, context->rank, ::gloo::Context::getCID());
+            reductionKeys = pHub->inferredKeys;
+        }
+        else
+        {
+            reductionKeys = caffe2KeyGetPLinkKey(ptrs[0]);
+            pHub = getPHubInstance();
+        }
+
+        //pHub = getPHubInstance(ptrs_.at(0), count, context->size, context->rank, ::gloo::Context::getCID());
         //printf("[%d] PHub initialized at %p\n", context->rank, this);
     }
 
@@ -57,7 +75,8 @@ class AllReducePHub : public Algorithm
         }
 
         //simply call PHub Reduce.
-        pHub->Reduce();
+        //CHECK(pHub != NULL || UseStandAlonePHub == false);
+        pHub->Reduce(reductionKeys);
     }
 };
 } // namespace gloo

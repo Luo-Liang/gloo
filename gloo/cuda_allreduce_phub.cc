@@ -51,8 +51,19 @@ CudaAllreducePHub<T, W>::CudaAllreducePHub(
   }
   T *ptr = *inbox_;
   int cid = ::gloo::Context::getCID();
-  fprintf(stderr, "initializing PHub with context[%d](%p). .size=%d .rank=%d .ptr=%p, .count=%d\n", cid, context.get(), context->size, context->rank, ptr, count);
-  pHub = createPHubInstance(ptr, count, context->size, context->rank, cid);
+
+  std::string standAlone = pHubGetOptionalEnvironmentVariable("PHubStandAlone");
+  UseStandAlonePHub = standAlone != "False";
+  if (UseStandAlonePHub)
+  {
+    pHub = createPHubInstance(ptrs.at(0), count, context->size, context->rank, ::gloo::Context::getCID());
+    reductionKeys = pHub->inferredKeys;
+  }
+  else
+  {
+    reductionKeys = caffe2KeyGetPLinkKey(ptrs[0]);
+    pHub = getPHubInstance();
+  }
 }
 // namespace gloo
 template <typename T, typename W>
@@ -71,7 +82,15 @@ void CudaAllreducePHub<T, W>::run()
   {
     stream.copyAsync(inbox_, scratch_);
     stream.wait();
-    pHub->Reduce();
+    CHECK(pHub != NULL || UseStandAlonePHub == false);
+    if (UseStandAlonePHub == false)
+    {
+      getPHubInstance()->Reduce();
+    }
+    else
+    {
+      pHub->Reduce();
+    }
     stream.copyAsync(scratch_, inbox_);
     stream.wait();
   }
