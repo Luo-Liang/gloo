@@ -21,7 +21,7 @@ namespace rendezvous {
 class Store {
  public:
   static constexpr std::chrono::milliseconds kDefaultTimeout =
-      std::chrono::seconds(30);
+      std::chrono::seconds(300);
 
   virtual ~Store();
 
