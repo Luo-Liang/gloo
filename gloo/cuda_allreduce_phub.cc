@@ -56,12 +56,12 @@ CudaAllreducePHub<T, W>::CudaAllreducePHub(
   UseStandAlonePHub = standAlone != "False";
   if (UseStandAlonePHub)
   {
-    pHub = createPHubInstance(ptrs.at(0), count, context->size, context->rank, ::gloo::Context::getCID());
+    pHub = createPHubInstance(ptr, count, context->size, context->rank, ::gloo::Context::getCID());
     reductionKeys = pHub->inferredKeys;
   }
   else
   {
-    reductionKeys = caffe2KeyGetPLinkKey(ptrs[0]);
+    reductionKeys = caffe2KeyGetPLinkKey(ptr);
     pHub = getPHubInstance();
   }
 }
