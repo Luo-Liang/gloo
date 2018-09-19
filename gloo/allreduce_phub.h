@@ -45,17 +45,25 @@ class AllReducePHub : public Algorithm
         UseStandAlonePHub = standAlone != "False";
         if (UseStandAlonePHub)
         {
-            pHub = createPHubInstance(ptrs_.at(0), count, context->size, context->rank, ::gloo::Context::getCID());
+            pHub = createPHubInstance(ptrs_.at(0), count, context_->size, context_->rank, ::gloo::Context::getCID());
             reductionKeys = pHub->inferredKeys;
-        }
-        else
-        {
-            reductionKeys = caffe2KeyGetPLinkKey(ptrs[0]);
-            pHub = getPHubInstance();
         }
 
         //pHub = getPHubInstance(ptrs_.at(0), count, context->size, context->rank, ::gloo::Context::getCID());
         //printf("[%d] PHub initialized at %p\n", context->rank, this);
+    }
+
+    void runSharedPHubInitialization(std::string frameworkSpecifics)
+    {
+        CHECK(UseStandAlonePHub == false);
+        caffe2BuildPHubInstance(
+            frameworkSpecifics,
+            (float*)ptrs_[0],
+            dataElementCount,
+            context_->size,
+            context_->rank);
+        reductionKeys = caffe2KeyGetPLinkKey(ptrs_[0]);
+        pHub = getPHubInstance();
     }
 
     virtual void run()

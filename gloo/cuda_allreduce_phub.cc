@@ -59,12 +59,22 @@ CudaAllreducePHub<T, W>::CudaAllreducePHub(
     pHub = createPHubInstance(ptr, count, context->size, context->rank, ::gloo::Context::getCID());
     reductionKeys = pHub->inferredKeys;
   }
-  else
-  {
-    reductionKeys = caffe2KeyGetPLinkKey(ptr);
-    pHub = getPHubInstance();
-  }
 }
+
+template <typename T, typename W>
+void CudaAllreducePHub<T, W>::runSharedPHubInitialization(std::string frameworkSpecifics)
+{
+  CHECK(UseStandAlonePHub == false);
+  caffe2BuildPHubInstance(
+      frameworkSpecifics,
+      (float*)*inbox_,
+      count_,
+      context_->size,
+      context_->rank);
+  reductionKeys = caffe2KeyGetPLinkKey(*inbox_);
+  pHub = getPHubInstance();
+}
+
 // namespace gloo
 template <typename T, typename W>
 void CudaAllreducePHub<T, W>::run()

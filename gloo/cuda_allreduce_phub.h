@@ -28,6 +28,7 @@ class CudaAllreducePHub : public Algorithm {
 
   virtual void run() override;
   bool UseStandAlonePHub;
+  void runSharedPHubInitialization(std::string frameworkSpecifics);
 
  protected:
   // Both workspace types have their own initialization function.
