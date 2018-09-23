@@ -52,13 +52,19 @@ class AllReducePHub : public Algorithm
         //pHub = getPHubInstance(ptrs_.at(0), count, context->size, context->rank, ::gloo::Context::getCID());
         //printf("[%d] PHub initialized at %p\n", context->rank, this);
     }
+    ~AllReducePHub()
+    {
+        pHub->Stop();
+        pHub->ShowPerformanceStatistics();
+        
+    }
 
     void runSharedPHubInitialization(std::string frameworkSpecifics)
     {
         CHECK(UseStandAlonePHub == false);
         caffe2BuildPHubInstance(
             frameworkSpecifics,
-            (float*)ptrs_[0],
+            (float *)ptrs_[0],
             dataElementCount,
             context_->size,
             context_->rank);
