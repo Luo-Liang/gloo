@@ -26,8 +26,6 @@ class CudaAllreducePHub : public Algorithm
         const int count,
         const std::vector<cudaStream_t> &streams = std::vector<cudaStream_t>());
 
-    virtual ~CudaAllreducePHub() = default;
-
     virtual void run() override;
     bool UseStandAlonePHub;
     void runSharedPHubInitialization(std::string frameworkSpecifics);
