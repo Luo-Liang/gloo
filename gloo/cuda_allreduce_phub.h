@@ -13,54 +13,62 @@
 
 #include <PHub/PHub.h>
 
-namespace gloo {
+namespace gloo
+{
 
-template <typename T, typename W = CudaHostWorkspace<T> >
-class CudaAllreducePHub : public Algorithm {
- public:
-  CudaAllreducePHub(
-      const std::shared_ptr<Context>& context,
-      const std::vector<T*>& ptrs,
-      const int count,
-      const std::vector<cudaStream_t>& streams = std::vector<cudaStream_t>());
+template <typename T, typename W = CudaHostWorkspace<T>>
+class CudaAllreducePHub : public Algorithm
+{
+  public:
+    CudaAllreducePHub(
+        const std::shared_ptr<Context> &context,
+        const std::vector<T *> &ptrs,
+        const int count,
+        const std::vector<cudaStream_t> &streams = std::vector<cudaStream_t>());
 
-  virtual ~CudaAllreducePHub() = default;
+    virtual ~CudaAllreducePHub() = default;
 
-  virtual void run() override;
-  bool UseStandAlonePHub;
-  void runSharedPHubInitialization(std::string frameworkSpecifics);
+    virtual void run() override;
+    bool UseStandAlonePHub;
+    void runSharedPHubInitialization(std::string frameworkSpecifics);
 
- protected:
-  // Both workspace types have their own initialization function.
-  template <typename U = W>
-  void init(
-      typename std::enable_if<
-          std::is_same<U, CudaHostWorkspace<T>>::value,
-          typename U::Pointer>::type* = 0);
+    ~CudaAllreducePHub()
+    {
+        pHub->Stop();
+        pHub->ShowPerformanceStatistics();
+    }
 
-  template <typename U = W>
-  void init(
-      typename std::enable_if<
-          std::is_same<U, CudaDeviceWorkspace<T>>::value,
-          typename U::Pointer>::type* = 0);
+  protected:
+    // Both workspace types have their own initialization function.
+    template <typename U = W>
+    void init(
+        typename std::enable_if<
+            std::is_same<U, CudaHostWorkspace<T>>::value,
+            typename U::Pointer>::type * = 0);
 
-  std::vector<CudaDevicePointer<T>> devicePtrs_;
-  std::vector<CudaStream> streams_;
-  typename W::Pointer scratch_;
-  CudaStream* scratchStream_;
+    template <typename U = W>
+    void init(
+        typename std::enable_if<
+            std::is_same<U, CudaDeviceWorkspace<T>>::value,
+            typename U::Pointer>::type * = 0);
 
-  const int count_;
-  const int bytes_;
-  const bool synchronizeDeviceOutputs_;
-  const CudaReductionFunction<T>* fn_;
+    std::vector<CudaDevicePointer<T>> devicePtrs_;
+    std::vector<CudaStream> streams_;
+    typename W::Pointer scratch_;
+    CudaStream *scratchStream_;
 
-  std::unique_ptr<LocalOp<T>> localReduceOp_;
-  std::unique_ptr<LocalOp<T>> localBroadcastOp_;
+    const int count_;
+    const int bytes_;
+    const bool synchronizeDeviceOutputs_;
+    const CudaReductionFunction<T> *fn_;
 
-  std::shared_ptr<PHub> pHub;
-  std::vector<PLinkKey> reductionKeys;
+    std::unique_ptr<LocalOp<T>> localReduceOp_;
+    std::unique_ptr<LocalOp<T>> localBroadcastOp_;
 
-  typename W::Pointer inbox_;
+    std::shared_ptr<PHub> pHub;
+    std::vector<PLinkKey> reductionKeys;
+
+    typename W::Pointer inbox_;
 };
 
 } // namespace gloo
