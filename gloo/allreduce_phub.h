@@ -55,7 +55,7 @@ class AllReducePHub : public Algorithm
     ~AllReducePHub()
     {
         pHub->Stop();
-        pHub->ShowPerformanceStatistics();
+        //pHub->ShowPerformanceStatistics();
     }
 
     void runSharedPHubInitialization(std::string frameworkSpecifics)
