@@ -505,7 +505,7 @@ void RunnerThread::spawn()
 
     for (auto i = 0; i < job_->iterations_; i++)
     {
-      GLOO_ENFORCE_NE(nullptr, job_->sync_);
+      GLOO_ENFORCE((bool)job_->sync_);
       job_->sync_();
       Timer dt;
       job_->fn_();
