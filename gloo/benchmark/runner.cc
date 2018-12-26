@@ -508,8 +508,6 @@ void RunnerThread::spawn()
 
     for (auto i = 0; i < job_->iterations_; i++)
     {
-      GLOO_ENFORCE((bool)job_->sync_);
-      job_->sync_();
       Timer dt;
       job_->fn_();
       job_->samples_.add(dt);
