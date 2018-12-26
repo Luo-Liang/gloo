@@ -34,8 +34,8 @@ class RunnerThread;
 // function (which is typically equal to the benchmark function).
 class RunnerJob {
  public:
-  explicit RunnerJob(std::function<void()> fn, int i) :
-    done_(false), fn_(fn), iterations_(i) {}
+  explicit RunnerJob(std::function<void()> fn, std::function<void()> sync, int i) :
+    done_(false), fn_(fn), iterations_(i), sync_(sync) {}
 
   const Samples& getSamples() const {
     return samples_;

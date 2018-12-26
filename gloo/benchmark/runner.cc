@@ -289,6 +289,10 @@ void Runner::run(BenchmarkFn<T> &fn, size_t n)
 
   // Switch mode based on iteration count or time spent
   auto iterations = options_.iterationCount;
+  auto barrier_context = contextFactory_->makeContext(
+      transportDevices_[0]);
+  BarrierAllToAll bata(barrier_context);
+
   if (iterations <= 0)
   {
     GLOO_ENFORCE_GT(options_.iterationTimeNanos, 0);
@@ -298,7 +302,8 @@ void Runner::run(BenchmarkFn<T> &fn, size_t n)
     for (auto i = 0; i < options_.threads; i++)
     {
       auto fn = [&benchmark = benchmarks[i]] { benchmark->run(); };
-      auto job = make_unique<RunnerJob>(fn, options_.warmupIterationCount);
+      auto sync = [&b = bata] { b.run(); };
+      auto job = make_unique<RunnerJob>(fn, sync, options_.warmupIterationCount);
       jobs.push_back(std::move(job));
     }
 
@@ -323,16 +328,14 @@ void Runner::run(BenchmarkFn<T> &fn, size_t n)
     auto nanos = broadcast(warmup.percentile(0.5));
     iterations = std::max(1L, options_.iterationTimeNanos / nanos);
   }
-  auto barrier_context = contextFactory_->makeContext(
-      transportDevices_[0]);
-  BarrierAllToAll bata(barrier_context);
+
   // Create jobs for every thread
   std::vector<std::unique_ptr<RunnerJob>> jobs;
   for (auto i = 0; i < options_.threads; i++)
   {
     auto fn = [&benchmark = benchmarks[i]] { benchmark->run(); };
     auto sync = [&b = bata] { b.run(); };
-    auto job = make_unique<RunnerJob>(fn, iterations);
+    auto job = make_unique<RunnerJob>(fn, sync, iterations);
     jobs.push_back(std::move(job));
   }
 
