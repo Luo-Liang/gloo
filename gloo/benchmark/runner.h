@@ -58,7 +58,7 @@ class RunnerJob {
   bool done_;
   std::mutex mutex_;
   std::condition_variable cond_;
-
+  std::function<void()> sync_;
   std::function<void()> fn_;
   int iterations_;
   Samples samples_;

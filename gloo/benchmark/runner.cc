@@ -13,6 +13,7 @@
 #include <iostream>
 
 #include "gloo/barrier_all_to_one.h"
+#include "gloo/barrier_all_to_all.h"
 #include "gloo/broadcast_one_to_all.h"
 #include "gloo/common/common.h"
 #include "gloo/common/logging.h"
@@ -37,17 +38,25 @@
 #include "gloo/transport/ibverbs/device.h"
 #endif
 
-namespace gloo {
-namespace benchmark {
+namespace gloo
+{
+namespace benchmark
+{
 
-Runner::Runner(const options& options) : options_(options) {
+Runner::Runner(const options &options) : options_(options)
+{
 #ifdef BENCHMARK_TCP
-  if (options_.transport == "tcp") {
-    if (options_.tcpDevice.empty()) {
+  if (options_.transport == "tcp")
+  {
+    if (options_.tcpDevice.empty())
+    {
       transport::tcp::attr attr;
       transportDevices_.push_back(transport::tcp::CreateDevice(attr));
-    } else {
-      for (const auto& name : options_.tcpDevice) {
+    }
+    else
+    {
+      for (const auto &name : options_.tcpDevice)
+      {
         transport::tcp::attr attr;
         attr.iface = name;
         transportDevices_.push_back(transport::tcp::CreateDevice(attr));
@@ -56,14 +65,19 @@ Runner::Runner(const options& options) : options_(options) {
   }
 #endif
 #ifdef BENCHMARK_IBVERBS
-  if (options_.transport == "ibverbs") {
-    if (options_.ibverbsDevice.empty()) {
+  if (options_.transport == "ibverbs")
+  {
+    if (options_.ibverbsDevice.empty())
+    {
       transport::ibverbs::attr attr;
       attr.port = options_.ibverbsPort;
       attr.index = options_.ibverbsIndex;
       transportDevices_.push_back(transport::ibverbs::CreateDevice(attr));
-    } else {
-      for (const auto& name : options_.ibverbsDevice) {
+    }
+    else
+    {
+      for (const auto &name : options_.ibverbsDevice)
+      {
         transport::ibverbs::attr attr;
         attr.name = name;
         attr.port = options_.ibverbsPort;
@@ -80,23 +94,27 @@ Runner::Runner(const options& options) : options_(options) {
       options_.transport);
 
   // Spawn threads that run the actual benchmark loop
-  for (auto i = 0; i < options_.threads; i++) {
+  for (auto i = 0; i < options_.threads; i++)
+  {
     threads_.push_back(make_unique<RunnerThread>());
   }
 
 #if GLOO_USE_REDIS
-  if (!contextFactory_) {
+  if (!contextFactory_)
+  {
     rendezvousRedis();
   }
 #endif
 
 #if GLOO_USE_MPI
-  if (!contextFactory_) {
+  if (!contextFactory_)
+  {
     rendezvousMPI();
   }
 #endif
 
-  if (!contextFactory_) {
+  if (!contextFactory_)
+  {
     rendezvousFileSystem();
   }
 
@@ -104,13 +122,14 @@ Runner::Runner(const options& options) : options_(options) {
 
   // Create broadcast algorithm to synchronize between participants
   broadcast_.reset(
-    new BroadcastOneToAll<long>(newContext(), {&broadcastValue_}, 1));
+      new BroadcastOneToAll<long>(newContext(), {&broadcastValue_}, 1));
 
   // Create barrier for run-to-run synchronization
   barrier_.reset(new BarrierAllToOne(newContext()));
 }
 
-Runner::~Runner() {
+Runner::~Runner()
+{
   // Reset algorithms and context factory such that all
   // shared_ptr's to contexts are destructed.
   // This is necessary so that all MPI common worlds are
@@ -120,16 +139,19 @@ Runner::~Runner() {
   contextFactory_.reset();
 
 #if GLOO_USE_MPI
-  if (options_.mpi) {
+  if (options_.mpi)
+  {
     MPI_Finalize();
   }
 #endif
 }
 
 #if GLOO_USE_REDIS
-void Runner::rendezvousRedis() {
+void Runner::rendezvousRedis()
+{
   // Don't rendezvous through Redis if the host is not set
-  if (options_.redisHost.empty()) {
+  if (options_.redisHost.empty())
+  {
     return;
   }
 
@@ -144,9 +166,11 @@ void Runner::rendezvousRedis() {
 #endif
 
 #if GLOO_USE_MPI
-void Runner::rendezvousMPI() {
+void Runner::rendezvousMPI()
+{
   // Don't rendezvous using MPI if not started through mpirun
-  if (!options_.mpi) {
+  if (!options_.mpi)
+  {
     return;
   }
 
@@ -161,68 +185,78 @@ void Runner::rendezvousMPI() {
 }
 #endif
 
-void Runner::rendezvousFileSystem() {
+void Runner::rendezvousFileSystem()
+{
   // Don't rendezvous using the file system if the shared path is not set
-  if (options_.sharedPath.empty()) {
+  if (options_.sharedPath.empty())
+  {
     return;
   }
 
   rendezvous::FileStore fileStore(options_.sharedPath);
   rendezvous::PrefixStore prefixStore(options_.prefix, fileStore);
   auto backingContext = std::make_shared<rendezvous::Context>(
-    options_.contextRank, options_.contextSize);
+      options_.contextRank, options_.contextSize);
   backingContext->connectFullMesh(prefixStore, transportDevices_.front());
   contextFactory_ = std::make_shared<rendezvous::ContextFactory>(
-    backingContext);
+      backingContext);
 }
 
-long Runner::broadcast(long value) {
+long Runner::broadcast(long value)
+{
   // Set value to broadcast only on root.
   // Otherwise it can race with the actual broadcast
   // operation writing to the same memory location.
-  if (options_.contextRank == 0) {
+  if (options_.contextRank == 0)
+  {
     broadcastValue_ = value;
   }
   broadcast_->run();
   return broadcastValue_;
 }
 
-std::shared_ptr<Context> Runner::newContext() {
+std::shared_ptr<Context> Runner::newContext()
+{
   auto context = contextFactory_->makeContext(transportDevices_.front());
   return context;
 }
 
 template <typename T>
-void Runner::run(BenchmarkFn<T>& fn) {
+void Runner::run(BenchmarkFn<T> &fn)
+{
   printHeader();
 
-  if (options_.elements > 0) {
+  if (options_.elements > 0)
+  {
     run(fn, options_.elements);
     return;
   }
 
   // Run sweep over number of elements
-  for (int i = 1; i <= 17; i ++) {
+  for (int i = 1; i <= 17; i++)
+  {
     int j = 1 << (i + 9);
     //std::vector<int> js = {i * 1, i * 2, i * 5};
     //for (auto& j : js) {
-     // printf("starting running %d\n", j);
-      //if(j >= 100000)
-      //{
-	    //  j = 100000 + (i - 9) * 10000;
-      //}
-      //printf("running %d\n", j);
-      run(fn, j);
-      //printf("done running %d\n", j);
-    }
+    // printf("starting running %d\n", j);
+    //if(j >= 100000)
+    //{
+    //  j = 100000 + (i - 9) * 10000;
+    //}
+    //printf("running %d\n", j);
+    run(fn, j);
+    //printf("done running %d\n", j);
+  }
 }
 
 template <typename T>
-void Runner::run(BenchmarkFn<T>& fn, size_t n) {
+void Runner::run(BenchmarkFn<T> &fn, size_t n)
+{
   std::vector<std::unique_ptr<Benchmark<T>>> benchmarks;
 
   // Initialize one set of objects for every thread
-  for (auto i = 0; i < options_.threads; i++) {
+  for (auto i = 0; i < options_.threads; i++)
+  {
     auto context = contextFactory_->makeContext(
         transportDevices_[i % transportDevices_.size()]);
     context->base = options_.base;
@@ -230,17 +264,21 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
     benchmark->initialize(n);
 
     // Switch pairs to sync mode if configured to do so
-    if (options_.sync) {
-      for (int j = 0; j < context->size; j++) {
-        auto& pair = context->getPair(j);
-        if (pair) {
+    if (options_.sync)
+    {
+      for (int j = 0; j < context->size; j++)
+      {
+        auto &pair = context->getPair(j);
+        if (pair)
+        {
           pair->setSync(true, options_.busyPoll);
         }
       }
     }
 
     // Verify correctness of initial run
-    if (options_.verify) {
+    if (options_.verify)
+    {
       benchmark->run();
       benchmark->verify();
       barrier_->run();
@@ -251,12 +289,14 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
 
   // Switch mode based on iteration count or time spent
   auto iterations = options_.iterationCount;
-  if (iterations <= 0) {
+  if (iterations <= 0)
+  {
     GLOO_ENFORCE_GT(options_.iterationTimeNanos, 0);
 
     // Create warmup jobs for every thread
     std::vector<std::unique_ptr<RunnerJob>> jobs;
-    for (auto i = 0; i < options_.threads; i++) {
+    for (auto i = 0; i < options_.threads; i++)
+    {
       auto fn = [&benchmark = benchmarks[i]] { benchmark->run(); };
       auto job = make_unique<RunnerJob>(fn, options_.warmupIterationCount);
       jobs.push_back(std::move(job));
@@ -264,13 +304,15 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
 
     // Start jobs on every thread (synchronized across processes)
     barrier_->run();
-    for (auto i = 0; i < options_.threads; i++) {
+    for (auto i = 0; i < options_.threads; i++)
+    {
       threads_[i]->run(jobs[i].get());
     }
 
     // Wait for completion and merge latency distributions
     Samples samples;
-    for (auto i = 0; i < options_.threads; i++) {
+    for (auto i = 0; i < options_.threads; i++)
+    {
       jobs[i]->wait();
       samples.merge(jobs[i]->getSamples());
     }
@@ -281,29 +323,36 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
     auto nanos = broadcast(warmup.percentile(0.5));
     iterations = std::max(1L, options_.iterationTimeNanos / nanos);
   }
-
+  auto barrier_context = contextFactory_->makeContext(
+      transportDevices_[0]);
+  BarrierAllToAll bata(barrier_context);
   // Create jobs for every thread
   std::vector<std::unique_ptr<RunnerJob>> jobs;
-  for (auto i = 0; i < options_.threads; i++) {
+  for (auto i = 0; i < options_.threads; i++)
+  {
     auto fn = [&benchmark = benchmarks[i]] { benchmark->run(); };
+    auto sync = [&b = bata] { b.run(); };
     auto job = make_unique<RunnerJob>(fn, iterations);
     jobs.push_back(std::move(job));
   }
 
   // Start jobs on every thread (synchronized across processes)
   barrier_->run();
-  for (auto i = 0; i < options_.threads; i++) {
+  for (auto i = 0; i < options_.threads; i++)
+  {
     threads_[i]->run(jobs[i].get());
   }
 
   // Wait for completion
-  for (auto i = 0; i < options_.threads; i++) {
+  for (auto i = 0; i < options_.threads; i++)
+  {
     jobs[i]->wait();
   }
 
   // Merge results
   Samples samples;
-  for (auto i = 0; i < options_.threads; i++) {
+  for (auto i = 0; i < options_.threads; i++)
+  {
     samples.merge(jobs[i]->getSamples());
   }
 
@@ -312,17 +361,23 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
   printDistribution(n, sizeof(T), latency);
 }
 
-void Runner::printHeader() {
-  if (options_.contextRank != 0) {
+void Runner::printHeader()
+{
+  if (options_.contextRank != 0)
+  {
     return;
   }
 
-  if (transportDevices_.size() == 1) {
+  if (transportDevices_.size() == 1)
+  {
     std::cout << std::left << std::setw(13) << "Device:";
     std::cout << transportDevices_.front()->str() << std::endl;
-  } else {
+  }
+  else
+  {
     std::cout << std::left << std::setw(13) << "Devices:" << std::endl;
-    for (const auto& device : transportDevices_) {
+    for (const auto &device : transportDevices_)
+    {
       std::cout << "  - " << device->str() << std::endl;
     }
   }
@@ -333,21 +388,28 @@ void Runner::printHeader() {
   std::cout << "processes=" << options_.contextSize;
   std::cout << ", inputs=" << options_.inputs;
   std::cout << ", threads=" << options_.threads;
-  if (options_.benchmark == "allreduce_bcube") {
+  if (options_.benchmark == "allreduce_bcube")
+  {
     std::cout << ", base=" << options_.base;
   }
-  if (options_.benchmark.compare(0, 5, "cuda_") == 0) {
+  if (options_.benchmark.compare(0, 5, "cuda_") == 0)
+  {
     std::cout << ", gpudirect=";
-    if (options_.transport == "ibverbs" && options_.gpuDirect) {
+    if (options_.transport == "ibverbs" && options_.gpuDirect)
+    {
       std::cout << "yes";
-    } else {
+    }
+    else
+    {
       std::cout << "no";
     }
   }
-  std::cout << std::endl << std::endl;
+  std::cout << std::endl
+            << std::endl;
 
   std::string suffix = "(us)";
-  if (options_.showNanos) {
+  if (options_.showNanos)
+  {
     suffix = "(ns)";
   }
   std::string bwSuffix = "(GB/s)";
@@ -366,13 +428,16 @@ void Runner::printHeader() {
 void Runner::printDistribution(
     size_t elements,
     size_t elementSize,
-    const Distribution& latency) {
-  if (options_.contextRank != 0) {
+    const Distribution &latency)
+{
+  if (options_.contextRank != 0)
+  {
     return;
   }
 
   auto div = 1000;
-  if (options_.showNanos) {
+  if (options_.showNanos)
+  {
     div = 1;
   }
 
@@ -396,18 +461,20 @@ void Runner::printDistribution(
   std::cout << std::endl;
 }
 
-template void Runner::run(BenchmarkFn<char>& fn);
-template void Runner::run(BenchmarkFn<char>& fn, size_t n);
-template void Runner::run(BenchmarkFn<float>& fn);
-template void Runner::run(BenchmarkFn<float>& fn, size_t n);
-template void Runner::run(BenchmarkFn<float16>& fn);
-template void Runner::run(BenchmarkFn<float16>& fn, size_t n);
+template void Runner::run(BenchmarkFn<char> &fn);
+template void Runner::run(BenchmarkFn<char> &fn, size_t n);
+template void Runner::run(BenchmarkFn<float> &fn);
+template void Runner::run(BenchmarkFn<float> &fn, size_t n);
+template void Runner::run(BenchmarkFn<float16> &fn);
+template void Runner::run(BenchmarkFn<float16> &fn, size_t n);
 
-RunnerThread::RunnerThread() : stop_(false), job_(nullptr) {
+RunnerThread::RunnerThread() : stop_(false), job_(nullptr)
+{
   thread_ = std::thread(&RunnerThread::spawn, this);
 }
 
-RunnerThread::~RunnerThread() {
+RunnerThread::~RunnerThread()
+{
   mutex_.lock();
   stop_ = true;
   mutex_.unlock();
@@ -415,23 +482,33 @@ RunnerThread::~RunnerThread() {
   thread_.join();
 }
 
-void RunnerThread::run(RunnerJob* job) {
+void RunnerThread::run(RunnerJob *job)
+{
   std::unique_lock<std::mutex> lock(mutex_);
   job_ = job;
   cond_.notify_one();
 }
 
-void RunnerThread::spawn() {
+void RunnerThread::spawn()
+{
   std::unique_lock<std::mutex> lock(mutex_);
-  while (!stop_) {
-    while (job_ == nullptr) {
+  while (!stop_)
+  {
+    while (job_ == nullptr)
+    {
       cond_.wait(lock);
-      if (stop_) {
+      if (stop_)
+      {
         return;
       }
     }
 
-    for (auto i = 0; i < job_->iterations_; i++) {
+    for (auto i = 0; i < job_->iterations_; i++)
+    {
+      if (job_->sync_)
+      {
+        job_->sync_();
+      }
       Timer dt;
       job_->fn_();
       job_->samples_.add(dt);
