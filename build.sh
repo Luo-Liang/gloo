@@ -1,4 +1,5 @@
 echo "building..."
+mkdir -p build
 git pull
 cd build
 rm * -rf
