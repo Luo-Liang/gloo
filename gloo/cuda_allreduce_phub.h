@@ -33,7 +33,7 @@ class CudaAllreducePHub : public Algorithm
     ~CudaAllreducePHub()
     {
         pHub->Stop();
-        pHub->ShowPerformanceStatistics();
+        //pHub->ShowPerformanceStatistics();
     }
 
   protected:

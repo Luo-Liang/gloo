@@ -31,7 +31,7 @@
 #include "gloo/rendezvous/prefix_store.h"
 #include "gloo/benchmark/benchmark.h"
 #include "gloo/benchmark/runner.h"
-#include "third-party/nlohmann/json/single_include/nlohmann/json.hpp"
+#include "third-party/nlohmann/single_include/nlohmann/json.hpp"
 #include "gloo/transport/tcp/device.h"
 
 using namespace gloo;
