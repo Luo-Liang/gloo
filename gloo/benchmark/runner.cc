@@ -356,7 +356,7 @@ void Runner::printHeader() {
   std::cout << std::setw(11) << "elements";
   std::cout << std::setw(11) << ("min " + suffix);
   std::cout << std::setw(11) << ("p50 " + suffix);
-  std::cout << std::setw(11) << ("p99 " + suffix);
+  std::cout << std::setw(11) << ("p10 " + suffix);
   std::cout << std::setw(11) << ("max " + suffix);
   std::cout << std::setw(13) << ("avg " + bwSuffix);
   std::cout << std::setw(11) << "samples";
@@ -388,7 +388,7 @@ void Runner::printDistribution(
   std::cout << std::setw(11) << elements;
   std::cout << std::setw(11) << (latency.min() / div);
   std::cout << std::setw(11) << (latency.percentile(0.50) / div);
-  std::cout << std::setw(11) << (latency.percentile(0.99) / div);
+  std::cout << std::setw(11) << (latency.percentile(0.1) / div);
   std::cout << std::setw(11) << (latency.max() / div);
   std::cout << std::fixed << std::setprecision(3);
   std::cout << std::setw(13) << totalGigaBytesPerSec << "(" << systemWideGigaBytesPerSec << ")";
