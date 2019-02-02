@@ -11,26 +11,33 @@
 
 #include <algorithm>
 #include <chrono>
+#include <math.h>
 
-namespace gloo {
-namespace benchmark {
+namespace gloo
+{
+namespace benchmark
+{
 
-class Timer {
- public:
-  Timer() {
+class Timer
+{
+public:
+  Timer()
+  {
     start();
   }
 
-  void start() {
+  void start()
+  {
     start_ = std::chrono::high_resolution_clock::now();
   }
 
-  long ns() const {
+  long ns() const
+  {
     auto now = std::chrono::high_resolution_clock::now();
     return std::chrono::nanoseconds(now - start_).count();
   }
 
- protected:
+protected:
   std::chrono::time_point<std::chrono::high_resolution_clock> start_;
 };
 
@@ -38,67 +45,91 @@ class Timer {
 class Distribution;
 
 // Stores latency samples
-class Samples {
+class Samples
+{
 public:
-  Samples() {
+  Samples()
+  {
     constexpr auto capacity = 100 * 1000;
     samples_.reserve(capacity);
   }
 
-  void add(long ns) {
+  void add(long ns)
+  {
     samples_.push_back(ns);
   }
 
-  void add(const Timer& t) {
+  void add(const Timer &t)
+  {
     add(t.ns());
   }
 
-  void merge(const Samples& other) {
+  void merge(const Samples &other)
+  {
     samples_.insert(
-      samples_.end(),
-      other.samples_.begin(),
-      other.samples_.end());
+        samples_.end(),
+        other.samples_.begin(),
+        other.samples_.end());
   }
 
- protected:
+protected:
   std::vector<long> samples_;
 
   friend class Distribution;
 };
 
 // Stores a sorted list of latency samples
-class Distribution {
- public:
-  explicit Distribution(const Samples& samples) :
-      samples_(samples.samples_) {
+class Distribution
+{
+public:
+  explicit Distribution(const Samples &samples) : samples_(samples.samples_)
+  {
     std::sort(samples_.begin(), samples_.end());
   }
 
-  size_t size() const {
+  size_t size() const
+  {
     return samples_.size();
   }
 
-  long min() const {
+  long min() const
+  {
     return samples_[0];
   }
 
-  long max() const {
+  long max() const
+  {
     return samples_[size() - 1];
   }
 
-  long percentile(float pct) const {
+  long percentile(float pct) const
+  {
     return samples_[pct * size()];
   }
 
-  long sum() const {
+  long sum() const
+  {
     long result = 0;
-    for (auto& sample : samples_) {
+    for (auto &sample : samples_)
+    {
       result += sample;
     }
     return result;
   }
 
- protected:
+  long std() const
+  {
+    long s = sum();
+    float mean = s / size();
+    float std = 0;
+    for (size_t i = 0; i < size(); ++i)
+    {
+      std += powf(samples_[i] - mean, 2);
+    }
+    return sqrt(std / size());
+  }
+
+protected:
   std::vector<long> samples_;
 };
 
