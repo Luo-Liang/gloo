@@ -224,7 +224,6 @@ std::shared_ptr<Context> Runner::newContext()
 template <typename T>
 void Runner::run(BenchmarkFn<T> &fn)
 {
-  printHeader();
 
   if (options_.elements > 0)
   {
@@ -361,6 +360,7 @@ void Runner::run(BenchmarkFn<T> &fn, size_t n)
 
   // Print results
   Distribution latency(samples);
+  printHeader();
   printDistribution(n, sizeof(T), latency);
 }
 
