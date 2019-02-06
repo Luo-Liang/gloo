@@ -418,6 +418,7 @@ void Runner::printHeader()
   std::string bwSuffix = "(GB/s)";
 
   std::cout << std::right;
+  std::cout << std::setw(11) << "********";
   std::cout << std::setw(11) << "elements";
   std::cout << std::setw(11) << ("min " + suffix);
   std::cout << std::setw(11) << ("p10 " + suffix);
@@ -455,6 +456,7 @@ void Runner::printDistribution(
   auto totalGigaBytesPerSec = totalBytesPerSec / (1024 * 1024 * 1024);
   auto systemWideGigaBytesPerSec = totalGigaBytesPerSec * options_.contextSize;
 
+  std::cout << std::setw(11) << "--------";
   std::cout << std::setw(11) << elements;
   std::cout << std::setw(11) << (latency.min() / div);
   std::cout << std::setw(11) << (latency.percentile(0.1) / div);
