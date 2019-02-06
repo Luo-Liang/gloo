@@ -417,7 +417,7 @@ void Runner::printHeader()
   }
   std::string bwSuffix = "(GB/s)";
 
-  std::cout << std::right;
+  //std::cout << std::right;
   std::cout << std::setw(11) << "********";
   std::cout << std::setw(11) << "elements";
   std::cout << std::setw(11) << ("min " + suffix);
@@ -426,7 +426,7 @@ void Runner::printHeader()
   std::cout << std::setw(11) << ("AVG " + suffix);
   std::cout << std::setw(11) << ("max " + suffix);
   std::cout << std::setw(11) << ("std " + suffix);
-  std::cout << std::setw(20) << ("avg " + bwSuffix);
+  std::cout << std::setw(20) << ("avg ");
 
   std::cout << std::setw(11) << "samples";
   std::cout << std::endl;
@@ -466,7 +466,7 @@ void Runner::printDistribution(
   std::cout << std::setw(11) << (latency.max() / div);
   std::cout << std::setw(11) << (latency.std() / div);
   std::cout << std::fixed << std::setprecision(3);
-  std::cout << std::setw(20) << totalGigaBytesPerSec << "(" << systemWideGigaBytesPerSec << ")";
+  std::cout << std::setw(20) << totalGigaBytesPerSec; // << "(" << systemWideGigaBytesPerSec << ")";
   std::cout << std::setw(11) << latency.size();
   std::cout << std::endl;
 }
