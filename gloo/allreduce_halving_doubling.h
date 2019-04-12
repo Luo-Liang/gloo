@@ -62,6 +62,7 @@ namespace gloo {
 
 			stepsWithinBlock_ = log2(myBinaryBlockSize_);
 			rankInBinaryBlock_ = this->context_->rank % myBinaryBlockSize_;
+			printf("myBinaryBlockSize_ = %d, nextSmallerBlockSize_ = %d, nextLargerBlockSize_ = %d\n", myBinaryBlockSize_, nextSmallerBlockSize_,nextLargerBlockSize_);
 		}
 
 	public:
