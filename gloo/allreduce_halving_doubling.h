@@ -260,6 +260,7 @@ namespace gloo {
 				bufferOffset += numItems;
 				sendNotificationBufs_[i]->send();
 				numItems >>= 1;
+				printf("[%d]. [%d]/[%d] reducer-scatter. \n",contextRank_, i, stepsWithinBlock_);
 			}
 
 			// Communication across binary blocks for non-power-of-two number of
@@ -346,6 +347,7 @@ namespace gloo {
 				// Send notification to the pair we just received from that
 				// we're done dealing with the receive buffer.
 				sendNotificationBufs_[i]->send();
+				printf("[%d]. [%d]/[%d] all-gather \n",contextRank_, i, stepsWithinBlock_);				
 			}
 			//printf("halving doubling 1 conetxt = %d, count = %d\n", contextRank_, count_);
 
