@@ -324,10 +324,13 @@ namespace gloo {
 			for (int i = stepsWithinBlock_ - 1; i >= 0; i--) {
 				// verify that destination rank has received and processed this rank's
 				// message during the reduce-scatter phase
+			  int PLinkRemoteRank = PLinkRankOrders.at(i);			  
 				recvNotificationBufs_[i]->waitRecv();
 				if (recvOffsets_[i] < count_) {
 					sendDataBufs_[i]->send(
 						recvOffsets_[i] * sizeof(T), recvCounts_[i] * sizeof(T));
+                                        printf("[%d]. sending to %d.\n",contextRank_, PLinkRemoteRank);
+					
 				}
 				bufferOffset -= numItems;
 				if (sendOffsets_[i] < count_) {
@@ -336,6 +339,7 @@ namespace gloo {
 						&ptrs_[0][sendOffsets_[i]],
 						&recvBuf_[bufferOffset],
 						sendCounts_[i] * sizeof(T));
+                                        printf("[%d]. recv from  %d.\n",contextRank_, PLinkRemoteRank);					
 				}
 				numItems <<= 1;
 
