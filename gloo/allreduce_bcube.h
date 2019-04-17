@@ -416,7 +416,7 @@ class AllreduceBcube : public Algorithm {
            */
           sendNotificationBufs_[srcRank]->send();
         }
-        printf("[%d]. [%d]/[%d] all-gather. send to %d\n", myRank_, step, steps_, srcRank);	
+        printf("[%d]. [%d]/[%d] all-gather. recv from %d\n", myRank_, step, steps_, srcRank);	
       } // recvs within group and reduces
       printf("[%d]. [%d]/[%d] all-gather.\n", myRank_, step, steps_);      
     } // all-gather steps
