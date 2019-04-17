@@ -114,6 +114,7 @@ namespace gloo {
 			size_t bufferOffset = 0; // offset into recvBuf_
 			for (int i = 0; i < stepsWithinBlock_; i++) {
 				const int destRank = (this->context_->rank) ^ bitmask;
+				PLinkRankOrders.push_back(destRank);
 				auto& pair = this->context_->getPair(destRank);
 				sendOffsets_[i] = sendOffset + ((destRank & bitmask) ? stepChunkSize : 0);
 				recvOffsets_[i] =
@@ -243,12 +244,15 @@ namespace gloo {
 
 			// Reduce-scatter
 			for (int i = 0; i < stepsWithinBlock_; i++) {
+			  int PLinkRemoteRank = PLinkRankOrders.at(i);
 				if (sendOffsets_[i] < count_) {
 					sendDataBufs_[i]->send(
 						sendOffsets_[i] * sizeof(T), sendCounts_[i] * sizeof(T));
+					printf("[%d]. sending to %d.\n",contextRank_, PLinkRemoteRank);
 				}
 				if (recvOffsets_[i] < count_) {
 					recvDataBufs_[i]->waitRecv();
+					printf("[%d]. recving from  %d.\n",contextRank_, PLinkRemoteRank);					
 					fn_->call(
 						&ptrs_[0][recvOffsets_[i]],
 						&recvBuf_[bufferOffset],
@@ -390,6 +394,9 @@ namespace gloo {
 		std::vector<std::unique_ptr<transport::Buffer>> sendDataBufs_;
 		std::vector<std::unique_ptr<transport::Buffer>> recvDataBufs_;
 
+
+		std::vector<int> PLinkRankOrders;
+		
 		std::unique_ptr<transport::Buffer> smallerBlockSendDataBuf_;
 		std::unique_ptr<transport::Buffer> smallerBlockRecvDataBuf_;
 
