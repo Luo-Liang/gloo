@@ -360,6 +360,7 @@ class AllreduceBcube : public Algorithm {
         DEBUG_PRINT_SEND("reduce-scatter");
         sendDataBufs_[destRank]->send(
             ptrOffset * sizeof(T), sendCount * sizeof(T));
+	printf("[%d]. [%d]/[%d] scatter-gather. send to %d\n", myRank_, step, steps_, destRank);
       } // sends within group
 
       for (int srcRank : getPeersPerStep(myRank_, step)) {
@@ -371,12 +372,14 @@ class AllreduceBcube : public Algorithm {
             &ptrs_[0][ptrOffset],
             &recvBufs_[recvBufIdx_[srcRank]][0],
             recvCount);
+	printf("[%d]. [%d]/[%d] scatter-gather. recvFrom  %d\n", myRank_, step, steps_, srcRank);	
         /*
          * Send notification to the pair we just received from that
          * we're done dealing with the receive buffer.
          */
         sendNotificationBufs_[srcRank]->send();
       } // recvs within group and reduces
+      printf("[%d]. [%d]/[%d] scatter-gather.\n", myRank_, step, steps_);
     } // reduce-scatter steps
 
     DEBUG_PRINT_STAGE("reduce-scattered");
@@ -394,6 +397,7 @@ class AllreduceBcube : public Algorithm {
         DEBUG_PRINT_SEND("all-gather");
         sendDataBufs_[destRank]->send(
             ptrOffset * sizeof(T), sendCount * sizeof(T));
+        printf("[%d]. [%d]/[%d] all-gather. send to %d\n", myRank_, step, steps_, destRank);
       }
 
       for (int srcRank : getPeersPerStep(myRank_, step)) {
@@ -412,7 +416,9 @@ class AllreduceBcube : public Algorithm {
            */
           sendNotificationBufs_[srcRank]->send();
         }
+        printf("[%d]. [%d]/[%d] all-gather. send to %d\n", myRank_, step, steps_, srcRank);	
       } // recvs within group and reduces
+      printf("[%d]. [%d]/[%d] all-gather.\n", myRank_, step, steps_);      
     } // all-gather steps
 
     DEBUG_PRINT_STAGE("all-reduced");
