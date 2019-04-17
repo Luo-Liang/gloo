@@ -247,11 +247,11 @@ namespace gloo {
 				if (sendOffsets_[i] < count_) {
 					sendDataBufs_[i]->send(
 						sendOffsets_[i] * sizeof(T), sendCounts_[i] * sizeof(T));
-					printf("[%d]. sending to %d.\n",contextRank_, PLinkRemoteRank);
+					printf("[%d]. [%d]/[%d] reduce-scatter sending to %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);
 				}
 				if (recvOffsets_[i] < count_) {
 					recvDataBufs_[i]->waitRecv();
-					printf("[%d]. recving from  %d.\n",contextRank_, PLinkRemoteRank);					
+					printf("[%d]. [%d]/[%d] reducer-scatter recving from  %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);					
 					fn_->call(
 						&ptrs_[0][recvOffsets_[i]],
 						&recvBuf_[bufferOffset],
@@ -329,7 +329,7 @@ namespace gloo {
 				if (recvOffsets_[i] < count_) {
 					sendDataBufs_[i]->send(
 						recvOffsets_[i] * sizeof(T), recvCounts_[i] * sizeof(T));
-                                        printf("[%d]. sending to %d.\n",contextRank_, PLinkRemoteRank);
+                                        printf("[%d]. [%d]/[%d] all-gather sending to %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);
 					
 				}
 				bufferOffset -= numItems;
@@ -339,7 +339,7 @@ namespace gloo {
 						&ptrs_[0][sendOffsets_[i]],
 						&recvBuf_[bufferOffset],
 						sendCounts_[i] * sizeof(T));
-                                        printf("[%d]. recv from  %d.\n",contextRank_, PLinkRemoteRank);					
+                                        printf("[%d]. [%d]/[%d] all-gather recv from  %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);					
 				}
 				numItems <<= 1;
 
