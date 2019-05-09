@@ -247,11 +247,11 @@ namespace gloo {
 				if (sendOffsets_[i] < count_) {
 					sendDataBufs_[i]->send(
 						sendOffsets_[i] * sizeof(T), sendCounts_[i] * sizeof(T));
-					printf("[%d]. [%d]/[%d] reduce-scatter sending to %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);
+					//printf("[%d]. [%d]/[%d] reduce-scatter sending to %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);
 				}
 				if (recvOffsets_[i] < count_) {
 					recvDataBufs_[i]->waitRecv();
-					printf("[%d]. [%d]/[%d] reducer-scatter recving from  %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);					
+					//printf("[%d]. [%d]/[%d] reducer-scatter recving from  %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);					
 					fn_->call(
 						&ptrs_[0][recvOffsets_[i]],
 						&recvBuf_[bufferOffset],
@@ -260,7 +260,7 @@ namespace gloo {
 				bufferOffset += numItems;
 				sendNotificationBufs_[i]->send();
 				numItems >>= 1;
-				printf("[%d]. [%d]/[%d] reducer-scatter. \n",contextRank_, i, stepsWithinBlock_);
+				//printf("[%d]. [%d]/[%d] reducer-scatter. \n",contextRank_, i, stepsWithinBlock_);
 			}
 
 			// Communication across binary blocks for non-power-of-two number of
@@ -330,7 +330,7 @@ namespace gloo {
 				if (recvOffsets_[i] < count_) {
 					sendDataBufs_[i]->send(
 						recvOffsets_[i] * sizeof(T), recvCounts_[i] * sizeof(T));
-                                        printf("[%d]. [%d]/[%d] all-gather sending to %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);
+                                        //printf("[%d]. [%d]/[%d] all-gather sending to %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);
 					
 				}
 				bufferOffset -= numItems;
@@ -340,14 +340,14 @@ namespace gloo {
 						&ptrs_[0][sendOffsets_[i]],
 						&recvBuf_[bufferOffset],
 						sendCounts_[i] * sizeof(T));
-                                        printf("[%d]. [%d]/[%d] all-gather recv from  %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);					
+                                        //printf("[%d]. [%d]/[%d] all-gather recv from  %d.\n",contextRank_, i, stepsWithinBlock_, PLinkRemoteRank);					
 				}
 				numItems <<= 1;
 
 				// Send notification to the pair we just received from that
 				// we're done dealing with the receive buffer.
 				sendNotificationBufs_[i]->send();
-				printf("[%d]. [%d]/[%d] all-gather \n",contextRank_, i, stepsWithinBlock_);				
+				//printf("[%d]. [%d]/[%d] all-gather \n",contextRank_, i, stepsWithinBlock_);				
 			}
 			//printf("halving doubling 1 conetxt = %d, count = %d\n", contextRank_, count_);
 
