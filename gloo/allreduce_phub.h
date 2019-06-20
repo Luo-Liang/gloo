@@ -91,6 +91,10 @@ class AllReducePHub : public Algorithm
         //simply call PHub Reduce.
         //CHECK(pHub != NULL || UseStandAlonePHub == false);
         pHub->Reduce(reductionKeys);
+        for (int i = 1; i < ptrs_.size(); i++) 
+        {
+	   memcpy(ptrs_[i], ptrs_[0], bytes_);
+	}
     }
 };
 } // namespace gloo
