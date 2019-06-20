@@ -65,12 +65,12 @@ class CudaAllreduceHalvingDoubling : public Algorithm {
   typename W::Pointer scratch_;
   CudaStream* scratchStream_;
 
-  const int count_;
-  const int bytes_;
+  int count_;
+  int bytes_;
   const size_t steps_;
-  const size_t chunks_;
-  const size_t chunkSize_;
-  const size_t chunkBytes_;
+  size_t chunks_;
+  size_t chunkSize_;
+  size_t chunkBytes_;
 
   const CudaReductionFunction<T>* fn_;
 
