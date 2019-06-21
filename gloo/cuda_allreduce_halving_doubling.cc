@@ -90,21 +90,24 @@ CudaAllreduceHalvingDoubling<T, W>::CudaAllreduceHalvingDoubling(
 
   const char* qRatioPtr = std::getenv("PHUB_QUANTIZATION_SIM_RATIO");
   if(qRatioPtr != nullptr)
-    {
+  {
       int qRatio = atoi(qRatioPtr);
-      fprintf(stderr, "warning: a quantiztion ratio of %d is specified.\n", qRatio);
-      int elements = count_;
-      int remElements = elements / qRatio;
-      int elementWidth = sizeof(T);
-      if(remElements == 0)
-	{
-	  remElements = 1;
-	}
-      bytes_  = remElements * elementWidth;
-      count_ = remElements;
-      chunkSize_ = (count_ + chunks_ - 1) / chunks_;
-      chunkBytes_ = chunkSize_ * sizeof(T);
-    }
+      if(qRatio!=1)
+      {
+          fprintf(stderr, "warning: a quantization ratio of %d is specified.\n", qRatio);
+          int elements = count_;
+          int remElements = elements / qRatio;
+          int elementWidth = sizeof(T);
+          if(remElements == 0)
+          {
+	      remElements = 1;
+          }
+          bytes_  = remElements * elementWidth;
+          count_ = remElements;
+          chunkSize_ = (count_ + chunks_ - 1) / chunks_;
+          chunkBytes_ = chunkSize_ * sizeof(T);
+      }
+  }
     
 
   
