@@ -78,19 +78,17 @@ class AllReducePHub : public Algorithm
         {
             fn_->call(ptrs_[0], ptrs_[i], dataElementCount);
         }
-        if (this->contextSize_ == 1)
+        if (this->contextSize_ != 1)
         {
-            // Broadcast ptrs_[0]
-            for (int i = 1; i < ptrs_.size(); i++)
-            {
-                memcpy(ptrs_[i], ptrs_[0], sizeof(T) * dataElementCount);
-            }
-            return;
-        }
-
         //simply call PHub Reduce.
         //CHECK(pHub != NULL || UseStandAlonePHub == false);
-        pHub->Reduce(reductionKeys);
+	  pHub->Reduce(reductionKeys);
+	}
+	for (int i = 1; i < ptrs_.size(); i++)
+	  {
+	    memcpy(ptrs_[i], ptrs_[0], sizeof(T) * dataElementCount);
+	  }
+
     }
 };
 } // namespace gloo
