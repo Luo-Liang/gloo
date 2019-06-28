@@ -55,8 +55,8 @@ class CudaAllreducePHub : public Algorithm
     typename W::Pointer scratch_;
     CudaStream *scratchStream_;
 
-    const int count_;
-    const int bytes_;
+    int count_;
+    int bytes_;
     const bool synchronizeDeviceOutputs_;
     const CudaReductionFunction<T> *fn_;
 
