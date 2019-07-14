@@ -76,7 +76,7 @@ CudaAllreducePHub<T, W>::CudaAllreducePHub(
   UseStandAlonePHub = standAlone != "False";
   if (UseStandAlonePHub)
   {
-    pHub = createPHubInstance(ptr, count, context->size, context->rank, ::gloo::Context::getCID());
+    pHub = createPHubInstance(ptr, count, context->size, context->rank, cid);
     reductionKeys = pHub->inferredKeys;
   }
 }
