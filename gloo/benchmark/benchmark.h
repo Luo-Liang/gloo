@@ -66,7 +66,7 @@ class Benchmark {
       // different and we can accurately detect correctness errors.
       auto value = (context_->rank * inputs) + i;
       for (size_t j = 0; j < elements; j++) {
-        memory[j] = (j * stride) + value;
+        memory[j] = 1; //(j * stride) + value;
       }
       ptrs.push_back(memory.data());
       inputs_.push_back(std::move(memory));

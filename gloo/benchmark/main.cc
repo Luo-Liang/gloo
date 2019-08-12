@@ -107,7 +107,7 @@ class AllreduceBenchmark : public Benchmark<T>
         // Size is the total number of pointers across the context
         const auto size = this->context_->size * this->inputs_.size();
         // Expected is set to the expected value at ptr[0]
-        const auto expected = (size * (size - 1)) / 2;
+        const auto expected = size; //(size * (size - 1)) / 2;
         // The stride between values at subsequent indices is equal to
         // "size", and we have "size" of them. Therefore, after
         // allreduce, the stride between expected values is "size^2".
@@ -116,9 +116,8 @@ class AllreduceBenchmark : public Benchmark<T>
         {
             for (int i = 0; i < input.size(); i++)
             {
-                auto offset = i * stride;
-                GLOO_ENFORCE_EQ(
-                    T(offset + expected), input[i], "Mismatch at index: ", i);
+	        //auto offset = i * stride;
+                GLOO_ENFORCE_EQ(T(expected), input[i], "Mismatch at index: ", i);
             }
         }
     }
