@@ -123,6 +123,7 @@ class AllreduceBenchmark : public Benchmark<T>
                 }
             }
         }
+        fprintf(stderr, "[0]verify ok.\n", this->context_.rank);
     }
 };
 
