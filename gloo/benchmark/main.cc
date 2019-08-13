@@ -120,6 +120,10 @@ class AllreduceBenchmark : public Benchmark<T>
                 GLOO_ENFORCE_EQ(T(expected), input[i], "Mismatch at index: ", i);
             }
         }
+	if(this->context_->rank == 0)
+	{
+	  fprintf(stderr, "verified okay\n");
+	}
     }
 };
 
