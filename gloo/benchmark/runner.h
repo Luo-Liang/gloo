@@ -34,8 +34,8 @@ class RunnerThread;
 // function (which is typically equal to the benchmark function).
 class RunnerJob {
  public:
-  explicit RunnerJob(std::function<void()> fn, std::function<void()> sync, int i) :
-    done_(false), fn_(fn), iterations_(i), sync_(sync) {}
+  explicit RunnerJob(std::function<void()> fn, std::function<void()> sync, std::function<void()> verify, int i) :
+  done_(false), fn_(fn), iterations_(i), sync_(sync), verify_(verify) {}
 
   const Samples& getSamples() const {
     return samples_;
@@ -60,6 +60,7 @@ class RunnerJob {
   std::condition_variable cond_;
   std::function<void()> sync_;
   std::function<void()> fn_;
+  std::function<void()> verify_;
   int iterations_;
   Samples samples_;
 

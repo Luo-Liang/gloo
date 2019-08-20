@@ -292,50 +292,23 @@ void Runner::run(BenchmarkFn<T> &fn, size_t n)
       transportDevices_[0]);
   BarrierAllToAll bata(barrier_context);
 
-  if (iterations <= 0)
-  {
-    GLOO_ENFORCE_GT(options_.iterationTimeNanos, 0);
-
-    // Create warmup jobs for every thread
-    std::vector<std::unique_ptr<RunnerJob>> jobs;
-    for (auto i = 0; i < options_.threads; i++)
-    {
-      auto fn = [&benchmark = benchmarks[i]] { benchmark->run(); };
-      auto sync = [&b = bata] { b.run(); };
-      auto job = make_unique<RunnerJob>(fn, sync, options_.warmupIterationCount);
-      jobs.push_back(std::move(job));
-    }
-
-    // Start jobs on every thread (synchronized across processes)
-    barrier_->run();
-    for (auto i = 0; i < options_.threads; i++)
-    {
-      threads_[i]->run(jobs[i].get());
-    }
-
-    // Wait for completion and merge latency distributions
-    Samples samples;
-    for (auto i = 0; i < options_.threads; i++)
-    {
-      jobs[i]->wait();
-      samples.merge(jobs[i]->getSamples());
-    }
-
-    // Broadcast duration of median iteration during warmup,
-    // so all nodes agree on the number of iterations to run for.
-    Distribution warmup(samples);
-    auto nanos = broadcast(warmup.percentile(0.5));
-    iterations = std::max(1L, options_.iterationTimeNanos / nanos);
-  }
-
   // Create jobs for every thread
   std::vector<std::unique_ptr<RunnerJob>> jobs;
   for (auto i = 0; i < options_.threads; i++)
   {
-    auto fn = [&benchmark = benchmarks[i]] { benchmark->run(); };
+    auto fn = [&benchmark = benchmarks[i]] { benchmark->run();};
     auto sync = [&b = bata] { b.run(); };
-    auto job = make_unique<RunnerJob>(fn, sync, iterations);
-    jobs.push_back(std::move(job));
+    if(options_.verify)
+      {
+	auto verify = [&benchmark = benchmarks[i]] { benchmark->verify();};
+	auto job = make_unique<RunnerJob>(fn, sync, verify, iterations);
+	jobs.push_back(std::move(job));
+      }
+    else
+      {
+	auto job = make_unique<RunnerJob>(fn, sync, nullptr, iterations);
+	jobs.push_back(std::move(job));	
+      }
   }
 
   // Start jobs on every thread (synchronized across processes)
@@ -518,6 +491,10 @@ void RunnerThread::spawn()
       Timer dt;
       job_->fn_();
       job_->samples_.add(dt);
+      if(job_->verify_ != nullptr)
+	{
+	  job_->verify_();
+	}
     }
 
     job_->done();

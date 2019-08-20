@@ -122,8 +122,17 @@ class AllreduceBenchmark : public Benchmark<T>
         }
 	if(this->context_->rank == 0)
 	{
-	  fprintf(stderr, "verified okay\n");
+	  fprintf(stderr, "verified okay, resetting \n");
 	}
+	for (auto &input : this->inputs_)
+        {
+	    for (int i = 0; i < input.size(); i++)
+            {
+                //auto offset = i * stride;
+              input[i] = (i % 2);
+            }
+	}
+
     }
 };
 

@@ -75,26 +75,21 @@ class CudaAllreduceBenchmark : public CudaBenchmark<T> {
   }
 
   virtual void verify() override {
-
-     const auto size = this->context_->size * this->inputs_.size();
-        // Expected is set to the expected value at ptr[0]
-        const auto expected = size; //(size * (size - 1)) / 2;
-        // The stride between values at subsequent indices is equal to
-        // "size", and we have "size" of them. Therefore, after
-        // allreduce, the stride between expected values is "size^2".
-        const auto stride = size * size;
-        for (const auto &input : this->inputs_)
-        {
-            for (int i = 0; i < input.size(); i++)
-            {
-                //auto offset = i * stride;
-              GLOO_ENFORCE_EQ(T((i % 2) * expected), input[i], "Mismatch at index: ", i);
-            }
-        }
-        if(this->context_->rank == 0)
-        {
-          fprintf(stderr, "verified okay\n");
-        }
+    // Size is the total number of pointers across the context
+    const auto size = this->context_->size * this->inputs_.size();
+    // Expected is set to the expected value at ptr[0]
+    const auto expected = (size * (size - 1)) / 2;
+    // The stride between values at subsequent indices is equal to
+    // "size", and we have "size" of them. Therefore, after
+    // allreduce, the stride between expected values is "size^2".
+    const auto stride = size * size;
+    for (const auto& input : this->inputs_) {
+      auto ptr = input.copyToHost();
+      for (int i = 0; i < input.elements; i++) {
+        auto offset = i * stride;
+        GLOO_ENFORCE_EQ(T(offset + expected), ptr[i], "Mismatch at index: ", i);
+      }
+    }
   }
 
  protected:
