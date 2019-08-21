@@ -96,6 +96,7 @@ void CudaMemory<T>::set(int val, size_t stride, cudaStream_t stream) {
   } else {
     initializeMemory<T><<<1, 32, 0, stream>>>(ptr_, val, elements, stride);
   }
+  CUDA_CHECK(cudaStreamSynchronize(0));
 }
 
 template<typename T>
