@@ -93,10 +93,11 @@ class CudaAllreduceBenchmark : public CudaBenchmark<T> {
       }
     }
 
-    for (auto& input : this->inputs_)
-      {
-	input.set(1,0);
-      }
+    for (auto i = 0; i < this->inputs_.size(); i++) {
+      CudaDeviceScope scope(i);
+      auto& input = this->inputs_[i];
+      input.set(1,0);
+    }
 
     static bool shown = false;
     if(shown == false)
