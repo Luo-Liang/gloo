@@ -117,7 +117,7 @@ class AllreduceBenchmark : public Benchmark<T>
             for (int i = 0; i < input.size(); i++)
             {
 	        //auto offset = i * stride;
-	      GLOO_ENFORCE_EQ(T((i % 2) * expected), input[i], "Mismatch at index: ", i);
+	      GLOO_ENFORCE_EQ(T((i % 2) * expected), input[i], "Mismatch at index: ", std::to_string(i) + " ID = " + std::to_string(this->context_->rank));
             }
         }
 	static bool shown = false;
