@@ -45,7 +45,8 @@ class CudaBenchmark : public Benchmark<T> {
     for (auto i = 0; i < inputs; i++) {
       CudaDeviceScope scope(i);
       auto cudaMemory = CudaMemory<T>(elements);
-      cudaMemory.set((this->context_->rank * inputs) + i, stride);
+      //set this
+      cudaMemory.set(1, 0);
       ptrs.push_back(*cudaMemory);
       inputs_.push_back(std::move(cudaMemory));
     }
@@ -87,7 +88,8 @@ class CudaAllreduceBenchmark : public CudaBenchmark<T> {
       auto ptr = input.copyToHost();
       for (int i = 0; i < input.elements; i++) {
         auto offset = i * stride;
-        GLOO_ENFORCE_EQ(T(offset + expected), ptr[i], "Mismatch at index: ", i);
+	GLOO_ENFORCE_EQ(T(this->context->size), ptr[i], "Mismatch at index: ", i);
+        //GLOO_ENFORCE_EQ(T(offset + expected), ptr[i], "Mismatch at index: ", i);
       }
     }
   }
