@@ -87,11 +87,27 @@ class CudaAllreduceBenchmark : public CudaBenchmark<T> {
     for (const auto& input : this->inputs_) {
       auto ptr = input.copyToHost();
       for (int i = 0; i < input.elements; i++) {
-        auto offset = i * stride;
-	GLOO_ENFORCE_EQ(T(this->context->size), ptr[i], "Mismatch at index: ", i);
+        //auto offset = i * stride;
+	GLOO_ENFORCE_EQ(T(size), ptr[i], "Mismatch at index: ", i);
         //GLOO_ENFORCE_EQ(T(offset + expected), ptr[i], "Mismatch at index: ", i);
       }
     }
+
+    for (auto& input : this->inputs_)
+      {
+	input.set(1,0);
+      }
+
+    static bool shown = false;
+    if(shown == false)
+      {
+	if(this->context_->rank == 0)
+	  {
+	    printf("verified okay. further notifications dismissed.\n");
+	    shown = true;
+	  }
+      }
+
   }
 
  protected:
