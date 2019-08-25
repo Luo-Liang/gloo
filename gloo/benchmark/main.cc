@@ -33,6 +33,7 @@
 #include "gloo/benchmark/runner.h"
 #include "third-party/nlohmann/single_include/nlohmann/json.hpp"
 #include "gloo/transport/tcp/device.h"
+#include <atomic>
 
 using namespace gloo;
 using namespace gloo::benchmark;
@@ -85,7 +86,9 @@ template <class A, typename T>
 class AllreduceBenchmark : public Benchmark<T>
 {
     using Benchmark<T>::Benchmark;
-
+    //report every 20 runs.
+    //first run is 1.
+    std::atomic<int> cntr(1);
   public:
     virtual void initialize(size_t elements) override
     {
@@ -120,11 +123,10 @@ class AllreduceBenchmark : public Benchmark<T>
 	      GLOO_ENFORCE_EQ(T((i % 2) * expected), input[i], "Mismatch at index: ", std::to_string(i) + " ID = " + std::to_string(this->context_->rank));
             }
         }
-	static bool shown = false;
-	if(this->context_->rank == 0 && shown == false)
+	if(cntr % 20 == 0)
 	{
-	  fprintf(stderr, "verified okay, resetting. No more this reminder.\n");
-	  shown = true;
+	  fprintf(stderr, "[%d][%dv]\n", this->context_->rank, cntr.load());
+	  cntr++;
 	}
 	for (auto &input : this->inputs_)
         {
