@@ -17,6 +17,7 @@
 #include "gloo/common/logging.h"
 #include "gloo/cuda_broadcast_one_to_all.h"
 #include "gloo/cuda_private.h"
+#include <atomic>
 
 using namespace gloo;
 using namespace gloo::benchmark;
@@ -58,6 +59,7 @@ class CudaBenchmark : public Benchmark<T> {
 
 template <typename T>
 class CudaAllreduceBenchmark : public CudaBenchmark<T> {
+	std::atomic<int> cntr = {1};
  public:
   CudaAllreduceBenchmark(
     std::shared_ptr<::gloo::Context>& context,
@@ -99,15 +101,11 @@ class CudaAllreduceBenchmark : public CudaBenchmark<T> {
       input.set(1,0);
     }
 
-    static bool shown = false;
-    if(shown == false)
-      {
-	if(this->context_->rank == 0)
-	  {
-	    printf("verified okay. further notifications dismissed.\n");
-	    shown = true;
-	  }
-      }
+	if(cntr % 20 == 0)
+	{
+	  fprintf(stderr, "[%d][%dv]\n", this->context_->rank, cntr.load());
+	  cntr++;
+	}
 
   }
 
