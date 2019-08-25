@@ -88,7 +88,7 @@ class AllreduceBenchmark : public Benchmark<T>
     using Benchmark<T>::Benchmark;
     //report every 20 runs.
     //first run is 1.
-    std::atomic<int> cntr(1);
+    std::atomic<int> cntr = {1};
   public:
     virtual void initialize(size_t elements) override
     {
