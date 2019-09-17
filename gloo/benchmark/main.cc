@@ -120,12 +120,12 @@ class AllreduceBenchmark : public Benchmark<T>
             for (int i = 0; i < input.size(); i++)
             {
 	        //auto offset = i * stride;
-	      GLOO_ENFORCE_EQ(T((i % 2) * expected), input[i], "Mismatch at index: ", std::to_string(i) + " ID = " + std::to_string(this->context_->rank));
+	      GLOO_ENFORCE_EQ(T(((i % 2) + 1) * expected), input[i], "Mismatch at index: ", std::to_string(i) + " ID = " + std::to_string(this->context_->rank));
             }
         }
 	if(cntr % 20 == 0)
 	{
-	  fprintf(stderr, "[%d][%dv]\n", this->context_->rank, cntr.load());
+	  fprintf(stderr, "[%d][%d+]\n", this->context_->rank, cntr.load());
 	}
 	cntr++;
 	
@@ -134,7 +134,7 @@ class AllreduceBenchmark : public Benchmark<T>
 	    for (int i = 0; i < input.size(); i++)
             {
                 //auto offset = i * stride;
-              input[i] = (i % 2);
+              input[i] = (i % 2) + 1;
             }
 	}
 
