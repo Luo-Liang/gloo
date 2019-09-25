@@ -87,6 +87,7 @@ CudaAllreduceHalvingDoubling<T, W>::CudaAllreduceHalvingDoubling(
       rankInBinaryBlock_(0),
       nextSmallerBlockSize_(0),
       nextLargerBlockSize_(0) {
+  printf("[%p] bytes = %d\n", ptrs.at(0), bytes_);
   initBinaryBlocks();
   sendDataBufs_.reserve(stepsWithinBlock_);
   recvDataBufs_.reserve(stepsWithinBlock_);
