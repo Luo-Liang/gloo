@@ -88,29 +88,7 @@ CudaAllreduceHalvingDoubling<T, W>::CudaAllreduceHalvingDoubling(
       nextSmallerBlockSize_(0),
       nextLargerBlockSize_(0) {
 
-  const char* qRatioPtr = std::getenv("PHUB_QUANTIZATION_SIM_RATIO");
-  if(qRatioPtr != nullptr)
-  {
-      int qRatio = atoi(qRatioPtr);
-      if(qRatio!=1)
-      {
-          fprintf(stderr, "warning: a quantization ratio of %d is specified.\n", qRatio);
-          int elements = count_;
-          int remElements = elements / qRatio;
-          int elementWidth = sizeof(T);
-          if(remElements == 0)
-          {
-	      remElements = 1;
-          }
-          bytes_  = remElements * elementWidth;
-          count_ = remElements;
-          chunkSize_ = (count_ + chunks_ - 1) / chunks_;
-          chunkBytes_ = chunkSize_ * sizeof(T);
-      }
-  }
-    
-
-  
+  printf("[%p] size = %d\n", ptrs.at(0), bytes_);
   initBinaryBlocks();
   sendDataBufs_.reserve(stepsWithinBlock_);
   recvDataBufs_.reserve(stepsWithinBlock_);
