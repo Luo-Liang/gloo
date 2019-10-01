@@ -104,7 +104,7 @@ void CudaAllreducePHub<T, W>::run()
         GLOO_ENFORCE(reductionBuffer[i] == context_->size); // << " location = " << i << " " << reductionBuffer[i] << " vs " <<context_->size;
         reductionBuffer[i] = 1;
     }
-    printf(stderr, "[%d] [%p] verified\n", context_->rank, *inbox);
+    printf(stderr, "[%d] [%p] verified\n", context_->rank, *inbox_);
     stream.copyAsync(scratch_, inbox_);
     stream.wait();
   }
