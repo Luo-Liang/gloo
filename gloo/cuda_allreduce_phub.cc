@@ -93,7 +93,17 @@ void CudaAllreducePHub<T, W>::run()
   {
     stream.copyAsync(inbox_, scratch_);
     stream.wait();
+    var reductionBuffer = (float*)(*inbox_);
+    for(int i = 0; i < count; i++)
+    {
+        reductionBuffer[i] = 1;
+    }
     pHub->Reduce(reductionKeys);
+    for(int i = 0; i < count; i++)
+    {
+        GLOO_ENFORCE(reductionBuffer[i] == context_->size) << " location = " << i << " key = " << frameworkSpecifics << " " << reductionBuffer[i] << " vs " <<context_->size;
+        reductionBuffer[i] = 1;
+    }
     stream.copyAsync(scratch_, inbox_);
     stream.wait();
   }
