@@ -101,7 +101,7 @@ void CudaAllreducePHub<T, W>::run()
     pHub->Reduce(reductionKeys);
     for(int i = 0; i < count_; i++)
     {
-        GLOO_ENFORCE(reductionBuffer[i] == context_->size) << " location = " << i << " " << reductionBuffer[i] << " vs " <<context_->size;
+        GLOO_ENFORCE(reductionBuffer[i] == context_->size); // << " location = " << i << " " << reductionBuffer[i] << " vs " <<context_->size;
         reductionBuffer[i] = 1;
     }
     stream.copyAsync(scratch_, inbox_);
