@@ -296,11 +296,14 @@ void Runner::run(BenchmarkFn<T> &fn, size_t n)
   std::vector<std::unique_ptr<RunnerJob>> jobs;
   for (auto i = 0; i < options_.threads; i++)
   {
-    auto fn = [&benchmark = benchmarks[i]] { benchmark->run();};
-    auto sync = [&b = bata] { b.run(); };
+    auto& benchmark = benchmarks[i];
+    auto fn = [&benchmark] { benchmark->run(); };
+    //uto fn = [&benchmark = benchmarks[i]] { benchmark->run();};
+    auto& b = bata;
+    auto sync = [&b] { b.run(); GLOO_ENFORCE(false, "do not call sync during benchmark"); };
     if(options_.verify)
       {
-	auto verify = [&benchmark = benchmarks[i]] { benchmark->verify();};
+	auto verify = [&benchmark] { benchmark->verify();};
 	auto job = make_unique<RunnerJob>(fn, sync, verify, iterations);
 	jobs.push_back(std::move(job));
       }
