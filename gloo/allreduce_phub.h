@@ -61,7 +61,10 @@ class AllReducePHub : public Algorithm
 
     void runSharedPHubInitialization(std::string frameworkSpecifics)
     {
-        PHUB_CHECK(UseStandAlonePHub == false);
+      #ifndef PHUB_CHECK
+      #define PHUB_CHECK CHECK
+      #endif
+      PHUB_CHECK(UseStandAlonePHub == false);
         caffe2BuildPHubInstance(
             frameworkSpecifics,
             (float *)ptrs_[0],

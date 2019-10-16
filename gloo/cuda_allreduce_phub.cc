@@ -64,6 +64,10 @@ CudaAllreducePHub<T, W>::CudaAllreducePHub(
 template <typename T, typename W>
 void CudaAllreducePHub<T, W>::runSharedPHubInitialization(std::string frameworkSpecifics)
 {
+  #ifndef PHUB_CHECK
+  //allow PHub compatibility
+  #define PHUB_CHECK CHECK
+  #endif
   PHUB_CHECK(UseStandAlonePHub == false);
   PHUB_CHECK(count_ > 0 && bytes_ > 0);
   caffe2BuildPHubInstance(
