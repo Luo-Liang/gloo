@@ -125,7 +125,7 @@ class AllreduceBenchmark : public Benchmark<T>
         }
 	if(cntr % 20 == 0)
 	{
-	  fprintf(stderr, "[%d][%d+]\n", this->context_->rank, cntr.load());
+	  fprintf(stderr, "[%d][%d++]\n", this->context_->rank, cntr.load());
 	}
 	cntr++;
 	
