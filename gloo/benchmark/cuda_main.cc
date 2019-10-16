@@ -88,7 +88,7 @@ class CudaAllreduceBenchmark : public CudaBenchmark<T> {
     const auto stride = size * size;
     for (const auto& input : this->inputs_) {
       auto ptr = input.copyToHost();
-      for (int i = 0; i < input.elements; i++) {
+      for (int i = input.elements - 1; i >= 0; i--) {
         //auto offset = i * stride;
 	GLOO_ENFORCE_EQ(T(size), ptr[i], "Mismatch at index: ", i);
         //GLOO_ENFORCE_EQ(T(offset + expected), ptr[i], "Mismatch at index: ", i);

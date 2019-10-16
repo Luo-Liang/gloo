@@ -131,7 +131,7 @@ class AllreduceBenchmark : public Benchmark<T>
 	
 	for (auto &input : this->inputs_)
         {
-	    for (int i = 0; i < input.size(); i++)
+	  for (int i = input.size() - 1; i >= 0; i--)
             {
                 //auto offset = i * stride;
               input[i] = (i % 2) + 1;
