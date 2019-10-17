@@ -90,22 +90,21 @@ class CudaAllreduceBenchmark : public CudaBenchmark<T> {
       auto ptr = input.copyToHost();
       for (int i = input.elements - 1; i >= 0; i--) {
         //auto offset = i * stride;
-	GLOO_ENFORCE_EQ(T(size), ptr[i], "Mismatch at index: ", i);
+	GLOO_ENFORCE_EQ(T(size * cntr), ptr[i], "Mismatch at index: ", i);
         //GLOO_ENFORCE_EQ(T(offset + expected), ptr[i], "Mismatch at index: ", i);
       }
     }
-
+    cntr++;
     for (auto i = 0; i < this->inputs_.size(); i++) {
       CudaDeviceScope scope(i);
       auto& input = this->inputs_[i];
-      input.set(1,0);
+      input.set(cntr,0);
     }
 
 	if(cntr % 20 == 0)
 	{
 	  fprintf(stderr, "[%d][%dv+]\n", this->context_->rank, cntr.load());
 	}
-        cntr++;
 	  
 
   }
