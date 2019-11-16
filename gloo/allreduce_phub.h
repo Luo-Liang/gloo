@@ -47,7 +47,7 @@ class AllReducePHub : public Algorithm
         {
             pHub = createPHubInstance(ptrs_.at(0), count, context_->size, context_->rank, ::gloo::Context::getCID());
             reductionKeys = pHub->inferredKeys;
-            printf("[%d] Creating PHub Instance.\r\n", context_->rank);
+            //printf("[%d] Creating PHub Instance.\r\n", context_->rank);
         }
 
         //pHub = getPHubInstance(ptrs_.at(0), count, context->size, context->rank, ::gloo::Context::getCID());
